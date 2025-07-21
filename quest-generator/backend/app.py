@@ -1,16 +1,19 @@
 # quest-generator/backend/app.py
 
-from flask import Flask, request, jsonify
+# Добавь render_template в импорты
+from flask import Flask, request, jsonify, render_template
 from quest_logic.generator import create_quest_from_setting
 
 app = Flask(__name__)
 
 
+# Этот эндпоинт теперь должен рендерить HTML
 @app.route("/")
-def hello_world():
-    return "Hello, QuestGenerator!"
+def index():
+    return render_template("index.html")
 
 
+# Этот эндпоинт остается без изменений
 @app.route("/generate", methods=["POST"])
 def generate_quest_endpoint():
     data = request.get_json()

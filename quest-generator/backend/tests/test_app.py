@@ -12,13 +12,22 @@ class AppTestCase(unittest.TestCase):
     @patch("backend.app.create_quest_from_setting")
     def test_generate_quest_endpoint_success(self, mock_create_quest):
         # Mock the return value of the quest generator
-        mock_quest = {"questTitle": "Test Quest", "startNodeId": "1", "nodes": []}
+        mock_quest = {
+            "questTitle": "Test Quest",
+            "startNodeId": "1",
+            "nodes": [],
+        }
         mock_create_quest.return_value = mock_quest
 
         # Send a POST request to the /generate endpoint
         response = self.app.post(
             "/generate",
-            data=json.dumps({"setting": "A dark and stormy night", "api_key": "test_key"}),
+            data=json.dumps(
+                {
+                    "setting": "A dark and stormy night",
+                    "api_key": "test_key",
+                }
+            ),
             content_type="application/json",
         )
 
