@@ -1,26 +1,34 @@
 # quest-generator/backend/quest_logic/generator.py
-
 import json
 from groq import Groq
 
+# Добавляем импорт для локальной генерации
+from backend.llm_integrations.local_llm import generate_quest_with_local_llm
 
-def create_quest_from_setting(setting_text: str, api_key: str):
+
+def create_quest(setting_text: str, model_identifier: str, api_key: str = None):
+    if model_identifier == "groq":
+        if not api_key:
+            return {"error": "API key is required for Groq model"}
+        return create_quest_with_groq(setting_text, api_key)
+    elif model_identifier in ["phi3-mini", "tinyllama"]:
+        return generate_quest_with_local_llm(setting_text, model_identifier)
+    else:
+        return {"error": "Invalid model identifier"}
+
+
+def create_quest_with_groq(setting_text: str, api_key: str):
     client = Groq(api_key=api_key)
 
     master_prompt = f"""
-    Ты — профессиональный геймдизайнер и сценарист.
-    Твоя задача — создать структуру нелинейного квеста в формате JSON
-    на основе предоставленного сеттинга.
+    Ты — профессиональный геймдизайнер и сценарист. Твоя задача — создать структуру нелинейного квеста в формате JSON на основе предоставленного сеттинга.
 
-    **КЛЮЧЕВОЕ ПРАВИЛО: Весь генерируемый текст (questTitle, title,
-    description, text) ДОЛЖЕН БЫТЬ СТРОГО НА РУССКОМ ЯЗЫКЕ.**
-
-    Правила структуры:
-    1. JSON должен быть валидным.
-    2. Квест должен иметь 4-5 узлов (nodes).
-    3. Обязательно должен быть хотя бы один узел с типом "ENDING_SUCCESS"
-       и один с "ENDING_FAILURE".
-    4. 'startNodeId' должен указывать на 'id' одного из узлов.
+    КЛЮЧЕВЫЕ ПРАВИЛА:
+    1.  ВЕСЬ СГЕНЕРИРОВАННЫЙ ТЕКСТ (в полях questTitle, title, description, text) ДОЛЖЕН БЫТЬ СТРОГО НА РУССКОМ ЯЗЫКЕ.
+    2.  JSON должен быть валидным и следовать структуре, описанной ниже.
+    3.  Квест должен иметь как минимум 3-4 узла (nodes).
+    4.  Обязательно должен быть хотя бы один узел с типом "ENDING_SUCCESS" и один с "ENDING_FAILURE".
+    5.  'startNodeId' должен указывать на 'id' одного из узлов.
 
     Вот требуемая структура JSON:
     {{
@@ -48,11 +56,16 @@ def create_quest_from_setting(setting_text: str, api_key: str):
     ---
 
     Теперь сгенерируй JSON для этого квеста на русском языке.
-    """
+    """  # noqa: E501
 
     try:
         chat_completion = client.chat.completions.create(
-            messages=[{"role": "user", "content": master_prompt}],
+            messages=[
+                {
+                    "role": "user",
+                    "content": master_prompt,
+                }
+            ],
             model="llama3-8b-8192",
             temperature=0.7,
             response_format={"type": "json_object"},

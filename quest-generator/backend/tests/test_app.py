@@ -9,7 +9,7 @@ class AppTestCase(unittest.TestCase):
         self.app = app.test_client()
         self.app.testing = True
 
-    @patch("backend.app.create_quest_from_setting")
+    @patch("backend.app.create_quest")
     def test_generate_quest_endpoint_success(self, mock_create_quest):
         # Mock the return value of the quest generator
         mock_quest = {
@@ -25,6 +25,7 @@ class AppTestCase(unittest.TestCase):
             data=json.dumps(
                 {
                     "setting": "A dark and stormy night",
+                    "model": "groq",
                     "api_key": "test_key",
                 }
             ),
@@ -47,7 +48,7 @@ class AppTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
             response.get_json(),
-            {"error": "Missing 'setting' or 'api_key' in request body"},
+            {"error": "Missing 'setting' or 'model' in request body"},
         )
 
 

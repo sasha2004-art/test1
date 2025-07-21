@@ -2,12 +2,12 @@
 set -e # Выход при первой ошибке
 
 echo "--- Formatting check with black ---"
-docker-compose exec backend black --check .
+black --check .
 
 echo "--- Linting with flake8 ---"
-docker-compose exec backend flake8 .
+flake8 .
 
 echo "--- Running tests with pytest ---"
-docker-compose exec backend pytest
+pytest
 
 echo "--- Verification PASSED ---"

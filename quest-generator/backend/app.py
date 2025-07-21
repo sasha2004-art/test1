@@ -2,7 +2,9 @@
 
 # Добавь render_template в импорты
 from flask import Flask, request, jsonify, render_template
-from quest_logic.generator import create_quest_from_setting
+
+# Меняем импорт
+from backend.quest_logic.generator import create_quest
 
 app = Flask(__name__)
 
@@ -13,22 +15,22 @@ def index():
     return render_template("index.html")
 
 
-# Этот эндпоинт остается без изменений
 @app.route("/generate", methods=["POST"])
 def generate_quest_endpoint():
     data = request.get_json()
-    if not data or "setting" not in data or "api_key" not in data:
+    # Добавляем проверку на model
+    if not data or "setting" not in data or "model" not in data:
         return (
-            jsonify(
-                {"error": "Missing 'setting' or 'api_key' in request body"}
-            ),
+            jsonify({"error": "Missing 'setting' or 'model' in request body"}),
             400,
         )
 
     setting = data["setting"]
-    api_key = data["api_key"]
+    model = data["model"]
+    # API ключ теперь опционален
+    api_key = data.get("api_key")
 
-    quest_json = create_quest_from_setting(setting, api_key)
+    quest_json = create_quest(setting, model, api_key)
 
     if "error" in quest_json:
         return jsonify(quest_json), 500

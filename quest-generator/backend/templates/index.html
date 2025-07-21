@@ -18,6 +18,15 @@
         </div>
 
         <div class="form-group">
+            <label for="model-select">Выберите модель:</label>
+            <select id="model-select">
+                <option value="groq">Groq (Llama3, очень быстро, нужен ключ)</option>
+                <option value="phi3-mini">Phi-3 Mini (Локально, средне)</option>
+                <option value="tinyllama">TinyLlama (Локально, быстро, просто)</option>
+            </select>
+        </div>
+
+        <div class="form-group" id="api-key-group">
             <label for="api-key-input">Ваш Groq API Ключ:</label>
             <input type="password" id="api-key-input" placeholder="gsk_...">
         </div>

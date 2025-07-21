@@ -5,13 +5,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const settingInput = document.getElementById('setting-input');
     const apiKeyInput = document.getElementById('api-key-input');
     const resultBox = document.getElementById('result-box');
+    const modelSelect = document.getElementById('model-select');
+    const apiKeyGroup = document.getElementById('api-key-group');
+
+    // Показываем/скрываем поле ключа в зависимости от выбора
+    modelSelect.addEventListener('change', () => {
+        apiKeyGroup.style.display = modelSelect.value === 'groq' ? 'block' : 'none';
+    });
 
     generateBtn.addEventListener('click', async () => {
         const setting = settingInput.value.trim();
+        const model = modelSelect.value;
         const apiKey = apiKeyInput.value.trim();
 
-        if (!setting || !apiKey) {
-            alert('Пожалуйста, заполните описание сеттинга и API-ключ.');
+        if (!setting) {
+            alert('Пожалуйста, заполните описание сеттинга.');
+            return;
+        }
+        if (model === 'groq' && !apiKey) {
+            alert('Пожалуйста, введите API-ключ для модели Groq.');
             return;
         }
 
@@ -19,15 +31,19 @@ document.addEventListener('DOMContentLoaded', () => {
         generateBtn.disabled = true;
 
         try {
+            // Обновляем тело запроса
+            const requestBody = {
+                setting: setting,
+                model: model,
+            };
+            if (model === 'groq') {
+                requestBody.api_key = apiKey;
+            }
+
             const response = await fetch('/generate', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    setting: setting,
-                    api_key: apiKey
-                }),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody),
             });
 
             const data = await response.json();
