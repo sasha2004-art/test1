@@ -1,0 +1,57 @@
+# .gitignore documentation:
+# This file specifies intentionally untracked files to ignore in the project.
+# - Environment files (.env) and Python cache/build artifacts (__pycache__, *.pyc, *.pyo, *.pyd, build/, dist/, *.egg-info/, pip-wheel-metadata/)
+# - Virtual environment directories (venv/, env/, .venv/)
+# - Machine learning model files (*.gguf, *.bin, *.pt, *.pth, *.onnx)
+# - Test and coverage outputs (.pytest_cache/, .coverage, htmlcov/, nosetests.xml, coverage.xml)
+# - IDE/editor settings (.vscode/, .idea/, *.sublime-project, *.sublime-workspace)
+# - Docker override file (docker-compose.override.yml)
+# - OS-specific files (.DS_Store, Thumbs.db, ._*)
+# - Project-specific files (validator.md, promt.txt)
+.env
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+venv/
+env/
+.venv/
+
+build/
+dist/
+*.egg-info/
+pip-wheel-metadata/
+
+
+*.gguf
+*.bin
+*.pt
+*.pth
+*.onnx
+
+
+.pytest_cache/
+.coverage
+htmlcov/
+nosetests.xml
+coverage.xml
+
+
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+
+docker-compose.override.yml
+
+
+.DS_Store
+Thumbs.db
+._*
+
+validator.md
+
+promt.txt
