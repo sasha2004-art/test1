@@ -18,6 +18,13 @@
         </div>
 
         <div class="form-group">
+            <label for="llm-select">Выберите модель:</label>
+            <select id="llm-select">
+                <option value="groq" selected>Groq (API, быстро)</option>
+                <option value="local_mixtral">Локальная Mixtral (медленно, ваш ПК)</option>
+            </select>
+        </div>
+        <div class="form-group" id="api-key-group">
             <label for="api-key-input">Ваш Groq API Ключ:</label>
             <input type="password" id="api-key-input" placeholder="gsk_...">
         </div>

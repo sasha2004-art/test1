@@ -1,36 +1,32 @@
-# quest-generator/backend/app.py
-
-# Добавь render_template в импорты
+import os
 from flask import Flask, request, jsonify, render_template
-from quest_logic.generator import create_quest_from_setting
+from .llm_integrations.factory import get_llm_instance
+from dotenv import load_dotenv
 
+load_dotenv()
 app = Flask(__name__)
 
-
-# Этот эндпоинт теперь должен рендерить HTML
-@app.route("/")
+@app.route('/')
 def index():
     return render_template("index.html")
 
-
-# Этот эндпоинт остается без изменений
-@app.route("/generate", methods=["POST"])
+@app.route('/generate', methods=['POST'])
 def generate_quest_endpoint():
     data = request.get_json()
-    if not data or "setting" not in data or "api_key" not in data:
-        return (
-            jsonify(
-                {"error": "Missing 'setting' or 'api_key' in request body"}
-            ),
-            400,
+    if not data or "setting" not in data:
+        return jsonify({"error": "Missing 'setting' in request body"}), 400
+
+    llm_type = data.get('llm_type', 'groq')
+    api_key = data.get('api_key')
+    setting = data['setting']
+
+    try:
+        llm_instance = get_llm_instance(
+            llm_type=llm_type,
+            api_key=api_key,
+            model_path=os.getenv('LOCAL_MODEL_PATH')
         )
-
-    setting = data["setting"]
-    api_key = data["api_key"]
-
-    quest_json = create_quest_from_setting(setting, api_key)
-
-    if "error" in quest_json:
-        return jsonify(quest_json), 500
-
-    return jsonify(quest_json)
+        quest_json = llm_instance.generate_quest(setting)
+        return jsonify(quest_json)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
