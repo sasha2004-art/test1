@@ -10,7 +10,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Копируем всё остальное содержимое проекта
 COPY . .
-
+# Устанавливаем переменную окружения для Flask
+ENV FLASK_APP=backend/app.py
 # Открываем порт 5000
 EXPOSE 5000
 
