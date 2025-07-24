@@ -45,6 +45,11 @@ Thumbs.db
 
 validator.md
 
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+nosetests.xml
 promt.txt
 
 collector.py

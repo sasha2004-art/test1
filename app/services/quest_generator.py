@@ -59,6 +59,10 @@ def create_quest_from_setting(setting_text: str, api_key: str):
             response_format={"type": "json_object"},
         )
         response_content = chat_completion.choices[0].message.content
+        if response_content is None:
+            logger.error("LLM returned no content.")
+            return {"error": "LLM returned no content."}
+
         return json.loads(response_content)
 
     except Exception as e:

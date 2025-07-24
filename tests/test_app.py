@@ -54,3 +54,23 @@ def test_generate_quest_endpoint_missing_data(client):
     assert response.get_json() == {
         "error": "Missing 'setting' or 'api_key' in request body"
     }
+
+
+def test_generate_quest_endpoint_generator_error(client, monkeypatch):
+    """Тестирует ответ 500, когда генератор квестов возвращает ошибку."""
+    error_response = {"error": "Произошла ошибка генерации"}
+    monkeypatch.setattr(
+        "main.create_quest_from_setting",
+        lambda setting, api_key: error_response
+    )
+
+    request_payload = {"setting": "любой", "api_key": "любой"}
+
+    response = client.post(
+        "/generate",
+        data=json.dumps(request_payload),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 500
+    assert response.get_json() == error_response
