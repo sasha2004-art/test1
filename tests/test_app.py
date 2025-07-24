@@ -1,55 +1,56 @@
 import json
-import unittest
-from unittest.mock import patch
-from app.main import app
+import pytest
+from main import app
 
 
-class AppTestCase(unittest.TestCase):
-    def setUp(self):
-        self.app = app.test_client()
-        self.app.testing = True
-
-    @patch("app.app.create_quest_from_setting")
-    def test_generate_quest_endpoint_success(self, mock_create_quest):
-        # Mock the return value of the quest generator
-        mock_quest = {
-            "questTitle": "Test Quest",
-            "startNodeId": "1",
-            "nodes": [],
-        }
-        mock_create_quest.return_value = mock_quest
-
-        # Send a POST request to the /generate endpoint
-        response = self.app.post(
-            "/generate",
-            data=json.dumps(
-                {
-                    "setting": "A dark and stormy night",
-                    "api_key": "test_key",
-                }
-            ),
-            content_type="application/json",
-        )
-
-        # Check that the response is correct
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.get_json(), mock_quest)
-
-    def test_generate_quest_endpoint_missing_data(self):
-        # Send a POST request with missing data
-        response = self.app.post(
-            "/generate",
-            data=json.dumps({"setting": "A dark and stormy night"}),
-            content_type="application/json",
-        )
-
-        # Check that the response is a 400 error
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(
-            response.get_json(),
-            {"error": "Missing 'setting' or 'api_key' in request body"},
-        )
+@pytest.fixture
+def client():
+    """Создает тестовый клиент Flask для каждого теста."""
+    app.config["TESTING"] = True
+    with app.test_client() as client:
+        yield client
 
 
-if __name__ == "__main__":
-    unittest.main()
+def test_generate_quest_endpoint_success(client, monkeypatch):
+    """
+    Тестирует успешный ответ от эндпоинта /generate,
+    используя monkeypatch для мока функции.
+    """
+    mock_quest = {
+        "questTitle": "Test Quest",
+        "startNodeId": "1",
+        "nodes": [],
+    }
+
+    monkeypatch.setattr(
+        "main.create_quest_from_setting",
+        lambda setting, api_key: mock_quest,
+    )
+
+    request_payload = {
+        "setting": "A dark and stormy night",
+        "api_key": "test_key",
+    }
+
+    response = client.post(
+        "/generate",
+        data=json.dumps(request_payload),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 200
+    assert response.get_json() == mock_quest
+
+
+def test_generate_quest_endpoint_missing_data(client):
+    """Тестирует ответ 400 при отсутствии данных в запросе."""
+    response = client.post(
+        "/generate",
+        data=json.dumps({"setting": "A dark and stormy night"}),
+        content_type="application/json",
+    )
+
+    assert response.status_code == 400
+    assert response.get_json() == {
+        "error": "Missing 'setting' or 'api_key' in request body"
+    }
