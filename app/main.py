@@ -1,10 +1,8 @@
-# quest-generator/backend/app.py
-
-# Добавь render_template в импорты
 from flask import Flask, request, jsonify, render_template
-from app.services.quest_generator import create_quest_from_setting
+from services.quest_generator import create_quest_from_setting
 
-app = Flask(__name__)
+# ИЗМЕНЕНИЕ: Явно указываем пути к папкам templates и static
+app = Flask(__name__, template_folder='templates', static_folder='static')
 
 
 # Этот эндпоинт теперь должен рендерить HTML

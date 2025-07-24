@@ -1,0 +1,62 @@
+# .dockerignore
+
+# Исключаем файлы Git
+.git
+.gitignore
+
+# Исключаем файлы, специфичные для Docker
+.dockerignore
+docker-compose.override.yml
+Dockerfile
+
+# Исключаем файлы моделей
+*.gguf
+*.bin
+*.pt
+*.pth
+*.onnx
+quest-generator/models/
+
+# Исключаем окружения Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+env/
+.venv/
+
+# Артефакты сборки
+build/
+dist/
+*.egg-info/
+pip-wheel-metadata/
+
+# Файлы IDE и редакторов
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Файлы тестов и покрытия
+.pytest_cache/
+.coverage
+htmlcov/
+nosetests.xml
+coverage.xml
+
+# Специфичные для ОС файлы
+.DS_Store
+Thumbs.db
+._*
+
+# Прочие файлы проекта, не нужные в образе
+AGENTS.md
+validator.md
+promt.txt
+collector.py
+all_code.txt
+docs/
+
+quest-generator/models/
+models/

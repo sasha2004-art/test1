@@ -9,14 +9,13 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+ENV PATH="/root/.local/bin:${PATH}"
 
-COPY . .
-
+COPY app/ .
 
 EXPOSE 5000
 
-CMD ["gunicorn", "--workers", "2", "--bind", "0.0.0.0:5000", "app.app:app"]
+CMD ["gunicorn", "--workers", "2", "--bind", "0.0.0.0:5000", "main:app"]

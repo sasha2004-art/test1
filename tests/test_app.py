@@ -1,7 +1,7 @@
 import json
 import unittest
 from unittest.mock import patch
-from app.app import app
+from app.main import app
 
 
 class AppTestCase(unittest.TestCase):
