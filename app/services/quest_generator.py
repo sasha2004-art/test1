@@ -44,7 +44,7 @@ def create_quest_from_setting(setting_text: str, api_key: str):
   ---
 
   Теперь сгенерируй JSON для этого квеста на русском языке.
-  """  # noqa: E501
+  """ 
 
     try:
         chat_completion = client.chat.completions.create(

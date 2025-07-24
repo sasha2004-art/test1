@@ -20,6 +20,3 @@ docker-compose -f docker/docker-compose.yml exec web semgrep scan --config "p/py
 
 echo "--- 7. Running tests and checking coverage ---"
 docker-compose -f docker/docker-compose.yml exec web python -m pytest --cov=main --cov=services --cov-report=term-missing --cov-fail-under=90 /tests
-
-echo ""
-echo "✅ ✅ ✅ ALL CHECKS PASSED ✅ ✅ ✅"
