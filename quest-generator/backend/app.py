@@ -4,7 +4,7 @@
 from flask import Flask, request, jsonify, render_template
 
 # Меняем импорт
-from backend.quest_logic.generator import create_quest
+from .quest_logic.generator import create_quest_from_setting
 
 app = Flask(__name__)
 
