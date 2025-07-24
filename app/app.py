@@ -2,7 +2,7 @@
 
 # Добавь render_template в импорты
 from flask import Flask, request, jsonify, render_template
-from quest_logic.generator import create_quest_from_setting
+from app.services.quest_generator import create_quest_from_setting
 
 app = Flask(__name__)
 
