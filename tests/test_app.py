@@ -1,7 +1,7 @@
 import json
 import unittest
 from unittest.mock import patch
-from backend.app import app
+from app.app import app
 
 
 class AppTestCase(unittest.TestCase):
@@ -9,7 +9,7 @@ class AppTestCase(unittest.TestCase):
         self.app = app.test_client()
         self.app.testing = True
 
-    @patch("backend.app.create_quest_from_setting")
+    @patch("app.app.create_quest_from_setting")
     def test_generate_quest_endpoint_success(self, mock_create_quest):
         # Mock the return value of the quest generator
         mock_quest = {
