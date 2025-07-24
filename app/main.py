@@ -1,17 +1,28 @@
+import os
+import logging
 from flask import Flask, request, jsonify, render_template
 from services.quest_generator import create_quest_from_setting
 
-# ИЗМЕНЕНИЕ: Явно указываем пути к папкам templates и static
 app = Flask(__name__, template_folder='templates', static_folder='static')
 
+if __name__ != '__main__':
+    gunicorn_logger = logging.getLogger('gunicorn.error')
+    app.logger.handlers = gunicorn_logger.handlers
+    app.logger.setLevel(gunicorn_logger.level)
 
-# Этот эндпоинт теперь должен рендерить HTML
+    port = os.getenv("EXTERNAL_PORT", "5001")
+    
+    app.logger.info("=" * 60)
+    app.logger.info(f"  AI Quest Generator запущен!")
+    app.logger.info(f"  Для доступа к приложению откройте: http://localhost:{port}")
+    app.logger.info("=" * 60)
+
+
 @app.route("/")
 def index():
     return render_template("index.html")
 
 
-# Этот эндпоинт остается без изменений
 @app.route("/generate", methods=["POST"])
 def generate_quest_endpoint():
     data = request.get_json()
