@@ -1,0 +1,23 @@
+.venv
+venv
+
+# Игнорируем кэш Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Игнорируем файлы IDE
+.idea/
+.vscode/
+
+# Игнорируем переменные окружения и большие файлы
+.env
+.env.*
+*.gguf
+*.bin
+
+# Системные файлы
+.DS_Store
+
+models
