@@ -101,12 +101,20 @@ pre {
     height: 100vh;
 }
 .sidebar {
-    width: 260px;
+    width: 27.5rem;
+    max-width: 27.5rem;
+    min-width: 5rem;
     background-color: #1e1e1e;
     padding: 20px;
     display: flex;
     flex-direction: column;
     border-right: 1px solid #333;
+    transition: all 0.3s ease-in-out;
+    overflow: hidden;
+}
+
+.sidebar:not(:hover) {
+    width: 5rem;
 }
 .logo-container {
     display: flex;
@@ -156,8 +164,34 @@ pre {
     border-radius: 4px;
     margin-bottom: 5px;
 }
+.chat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
 .chat-item:hover, .chat-item.active {
     background-color: #2a2a2a;
+}
+
+.chat-item .edit-btn, .chat-item .delete-btn {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.chat-item:hover .edit-btn, .chat-item:hover .delete-btn {
+    display: inline;
+}
+
+.edit-btn {
+    color: #00aaff;
+}
+
+.delete-btn {
+    color: #ff4444;
 }
 .sidebar-footer {
     margin-top: auto;

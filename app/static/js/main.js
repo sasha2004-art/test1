@@ -22,21 +22,77 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    let chatsVisible = false;
+
     function renderChatList() {
         chatList.innerHTML = '';
-        for (const id in chats) {
+        const chatIds = Object.keys(chats);
+
+        const visibleChats = chatsVisible ? chatIds : chatIds.slice(0, 10);
+
+        for (const id of visibleChats) {
             const chat = chats[id];
             const chatDiv = document.createElement('div');
             chatDiv.classList.add('chat-item');
             if (id === activeChatId) {
                 chatDiv.classList.add('active');
             }
-            chatDiv.textContent = chat.title;
+
+            const chatTitle = document.createElement('span');
+            chatTitle.textContent = chat.title;
+            chatDiv.appendChild(chatTitle);
+
+            const editBtn = document.createElement('button');
+            editBtn.innerHTML = '&#9998;'; // Edit icon
+            editBtn.classList.add('edit-btn');
+            editBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const newTitle = prompt('Enter new chat title:', chat.title);
+                if (newTitle) {
+                    chats[id].title = newTitle;
+                    saveChats();
+                    renderChatList();
+                }
+            });
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.innerHTML = '&#128465;'; // Trash icon
+            deleteBtn.classList.add('delete-btn');
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (confirm('Are you sure you want to delete this chat?')) {
+                    delete chats[id];
+                    if (activeChatId === id) {
+                        activeChatId = Object.keys(chats)[0] || null;
+                        if(activeChatId) {
+                            switchChat(activeChatId);
+                        } else {
+                            createNewChat();
+                        }
+                    }
+                    saveChats();
+                    renderChatList();
+                }
+            });
+
+            chatDiv.appendChild(editBtn);
+            chatDiv.appendChild(deleteBtn);
+
             chatDiv.dataset.chatId = id;
             chatDiv.addEventListener('click', () => {
                 switchChat(id);
             });
             chatList.appendChild(chatDiv);
+        }
+
+        if (chatIds.length > 10) {
+            const toggleBtn = document.createElement('button');
+            toggleBtn.textContent = chatsVisible ? 'Свернуть' : 'Развернуть';
+            toggleBtn.addEventListener('click', () => {
+                chatsVisible = !chatsVisible;
+                renderChatList();
+            });
+            chatList.appendChild(toggleBtn);
         }
     }
 
