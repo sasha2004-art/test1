@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock, patch
-import json  # Import json for stringifying mock content
-import re  # Import re for potential future regex needs, though not strictly needed here for tests directly
+import json
+import re
 
 from services.quest_generator import (
     create_quest_from_setting,
@@ -74,21 +74,21 @@ def test_create_quest_no_content(mock_groq):
     assert result["error"] == "LLM returned no content."
 
 
-@patch("services.quest_generator.Groq")  # ИСПРАВЛЕНО
+@patch("services.quest_generator.Groq")
 def test_validate_key_groq_success(mock_groq):
     """Тестирует успешную валидацию ключа Groq."""
     mock_groq.return_value.models.list.return_value = MagicMock()
     assert validate_api_key("groq", "valid") == {"status": "ok"}
 
 
-@patch("services.quest_generator.openai.OpenAI")  # ИСПРАВЛЕНО
+@patch("services.quest_generator.openai.OpenAI")
 def test_validate_key_openai_success(mock_openai):
     """Тестирует успешную валидацию ключа OpenAI."""
     mock_openai.return_value.models.list.return_value = MagicMock()
     assert validate_api_key("openai", "valid") == {"status": "ok"}
 
 
-@patch("services.quest_generator.genai")  # ИСПРАВЛЕНО
+@patch("services.quest_generator.genai")
 def test_validate_key_gemini_success(mock_genai):
     """Тестирует успешную валидацию ключа Gemini."""
     mock_model = MagicMock()
@@ -98,7 +98,7 @@ def test_validate_key_gemini_success(mock_genai):
     mock_genai.configure.assert_called_once_with(api_key="valid")
 
 
-@patch("services.quest_generator.genai")  # ИСПРАВЛЕНО
+@patch("services.quest_generator.genai")
 def test_validate_key_gemini_no_models(mock_genai):
     """Тестирует валидацию Gemini, когда не найдено подходящих моделей."""
     mock_genai.list_models.return_value = []
@@ -107,7 +107,7 @@ def test_validate_key_gemini_no_models(mock_genai):
     assert "Ошибка проверки ключа" in result["message"]
 
 
-@patch("services.quest_generator.Groq")  # ИСПРАВЛЕНО
+@patch("services.quest_generator.Groq")
 def test_validate_key_api_error_401(mock_groq):
     """Тестирует обработку ошибки 401 (неверный ключ)."""
     mock_groq.return_value.models.list.side_effect = Exception("401 Invalid Key")
@@ -115,7 +115,7 @@ def test_validate_key_api_error_401(mock_groq):
     assert result == {"status": "error", "message": "Неверный API ключ."}
 
 
-@patch("services.quest_generator.Groq")  # ИСПРАВЛЕНО
+@patch("services.quest_generator.Groq")
 def test_validate_key_generic_api_error(mock_groq):
     """Тестирует обработку общей ошибки API."""
     mock_groq.return_value.models.list.side_effect = Exception("Connection Timeout")
@@ -129,7 +129,6 @@ def test_validate_key_generic_api_error(mock_groq):
 def test_validate_key_unknown_provider():
     """Тестирует валидацию с неизвестным провайдером."""
     result = validate_api_key("foobar", "any_key")
-    # ИСПРАВЛЕНО: Обновлено ожидаемое значение для соответствия формату {"error": "..."}
     assert result == {"error": "Unknown API provider: foobar"}
 
 
@@ -257,7 +256,7 @@ def test_create_quest_api_rate_limit_error(mock_groq):
         "любой сеттинг", "fake_key", "groq", "llama3-8b-8192"
     )
     assert "error" in result
-    assert "Превышен лимит запросов к API." in result["error"]
+    assert "Превышен лимит запросов к API. Попробуйте позже." in result["error"]
 
 
 @patch("services.quest_generator.Groq")
@@ -283,7 +282,6 @@ def test_create_quest_api_model_not_found_error(mock_groq):
         "любой сеттинг", "fake_key", "groq", "gemma-7b-it"
     )
     assert "error" in result
-    # ИСПРАВЛЕНО: Обновлено ожидаемое сообщение об ошибке
     assert (
         "Выбранная модель 'gemma-7b-it' не найдена, недоступна или устарела у провайдера groq."
         in result["error"]
@@ -324,5 +322,21 @@ def test_create_quest_api_general_error(mock_groq):
     assert "error" in result
     assert (
         "Произошла ошибка при обращении к API groq: Some unexpected API error occurred."
+        in result["error"]
+    )
+
+
+@patch("services.quest_generator.openai.OpenAI")
+def test_create_quest_api_quota_exceeded_error(mock_openai):
+    """Тестирует обработку ошибки превышения квоты OpenAI."""
+    mock_openai.return_value.chat.completions.create.side_effect = Exception(
+        "Error code: 429 - {'error': {'message': 'You exceeded your current quota, please check your plan and billing details.', 'type': 'insufficient_quota'}}"
+    )
+    result = create_quest_from_setting(
+        "любой сеттинг", "fake_key", "openai", "gpt-3.5-turbo"
+    )
+    assert "error" in result
+    assert (
+        "Превышен лимит использования API или недостаточно средств. Пожалуйста, проверьте ваш тарифный план или баланс."
         in result["error"]
     )

@@ -1,5 +1,3 @@
-# app/services/quest_generator.py
-
 import json
 import logging
 import re
@@ -122,6 +120,14 @@ def create_quest_from_setting(
             f"An error occurred while generating quest with {api_provider}: {e}"
         )
         error_message_lower = str(e).lower()
+        # Добавлена проверка на ошибку квоты
+        if (
+            "quota" in error_message_lower
+            or "insufficient_quota" in error_message_lower
+        ):
+            return {
+                "error": "Превышен лимит использования API или недостаточно средств. Пожалуйста, проверьте ваш тарифный план или баланс."
+            }
         if "rate limit" in error_message_lower:
             return {"error": "Превышен лимит запросов к API. Попробуйте позже."}
         if (
@@ -130,7 +136,6 @@ def create_quest_from_setting(
             or "401" in error_message_lower
         ):
             return {"error": "Неверный API ключ. Пожалуйста, проверьте ваш ключ."}
-        # УТОЧНЕНО: Добавлено 'deprecated' и условие '404' в сочетании с 'model' для обработки ошибок устаревших/недоступных моделей
         if (
             "model not found" in error_message_lower
             or "model_not_found" in error_message_lower
@@ -170,7 +175,6 @@ def validate_api_key(api_provider: str, api_key: str) -> Dict[str, Any]:
                 raise ValueError("No generative models found for this API key.")
             return {"status": "ok"}
         else:
-            # ИСПРАВЛЕНО: Изменен формат возврата для соответствия другим ошибкам
             return {"error": f"Unknown API provider: {api_provider}"}
 
     except Exception as e:
