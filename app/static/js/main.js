@@ -67,9 +67,23 @@ document.addEventListener('DOMContentLoaded', () => {
     async function updateModels() {
         const selectedProvider = document.querySelector('input[name="api_provider"]:checked').value;
         const apiKey = localStorage.getItem(`${selectedProvider}_api_key`);
+        const cachedModels = localStorage.getItem(`${selectedProvider}_models`);
 
         if (!apiKey) {
             modelSelectorGroup.style.display = 'none';
+            return;
+        }
+
+        if (cachedModels) {
+            const models = JSON.parse(cachedModels);
+            modelSelector.innerHTML = '';
+            models.forEach(model => {
+                const option = document.createElement('option');
+                option.value = model;
+                option.textContent = model;
+                modelSelector.appendChild(option);
+            });
+            modelSelectorGroup.style.display = 'block';
             return;
         }
 
@@ -88,6 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
 
             if (response.ok && data.models) {
+                localStorage.setItem(`${selectedProvider}_models`, JSON.stringify(data.models));
                 modelSelector.innerHTML = '';
                 data.models.forEach(model => {
                     const option = document.createElement('option');

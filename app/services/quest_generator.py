@@ -189,16 +189,22 @@ def validate_api_key(api_provider: str, api_key: str) -> Dict[str, Any]:
 
 
 def get_available_models(api_provider: str, api_key: str) -> Dict[str, Any]:
-    """Получает список доступных моделей для указанного провайдера."""
+    """Получает и фильтрует список доступных моделей."""
     try:
+        models_list = []
         if api_provider == "groq":
             client = Groq(api_key=api_key)
             models = client.models.list().data
-            return {"models": [model.id for model in models]}
+            models_list = [model.id for model in models]
         elif api_provider == "openai":
             client = openai.OpenAI(api_key=api_key)
             models = client.models.list().data
-            return {"models": [model.id for model in models]}
+            # Фильтруем модели, чтобы исключить те, которые не предназначены для генерации текста
+            models_list = [
+                model.id
+                for model in models
+                if "gpt" in model.id.lower() or "text" in model.id.lower()
+            ]
         elif api_provider == "gemini":
             genai.configure(api_key=api_key)  # type: ignore[reportPrivateImportUsage]
             models = [
@@ -206,9 +212,21 @@ def get_available_models(api_provider: str, api_key: str) -> Dict[str, Any]:
                 for m in genai.list_models()  # type: ignore[reportPrivateImportUsage]
                 if "generateContent" in m.supported_generation_methods
             ]
-            return {"models": models}
+            models_list = models
         else:
             return {"error": f"Unknown API provider: {api_provider}"}
+
+        # Удаляем дубликаты и старые версии моделей
+        unique_models = {}
+        for model in sorted(models_list):
+            # Используем regex для удаления дат и версий в конце
+            base_name = re.sub(r"-\d{4}-\d{2}-\d{2}$", "", model)
+            base_name = re.sub(r"-\d{4}$", "", base_name)
+            if base_name not in unique_models:
+                unique_models[base_name] = model
+
+        return {"models": list(unique_models.values())}
+
     except Exception as e:
         logger.error(f"Failed to get models for {api_provider}: {e}")
         return {"error": str(e)}
