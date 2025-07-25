@@ -2,6 +2,7 @@
 
 import json
 import logging
+import re
 from typing import Any, Dict
 
 import google.generativeai as genai
@@ -17,7 +18,7 @@ def _get_master_prompt(setting_text: str) -> str:
   Ты — профессиональный геймдизайнер и сценарист. Твоя задача — создать структуру нелинейного квеста в формате JSON на основе предоставленного сеттинга.
 
   КЛЮЧЕВЫЕ ПРАВИЛА:
-  1.  ВЕСЬ СГЕНЕРИРОВАННЫЙ ТЕКСТ (в полях questTitle, title, description, text) ДОЛЖЕН БЫТЬ СТРОГО НА РУССКОМ ЯЗЫКЕ.
+  1.  ВЕСЬ СГЕНЕРИРОВАННЫЙ ТЕКСТ (в полях questTitle, title, description, text) ДОЛЖЕН БЫТРО СТРОГО НА РУССКОМ ЯЗЫКЕ.
   2.  JSON должен быть валидным и следовать структуре, описанной ниже.
   3.  Квест должен иметь как минимум 3-4 узла (nodes).
   4.  Обязательно должен быть хотя бы один узел с типом "ENDING_SUCCESS" и один с "ENDING_FAILURE".
@@ -55,7 +56,7 @@ def _get_master_prompt(setting_text: str) -> str:
 def create_quest_from_setting(
     setting_text: str, api_key: str, api_provider: str, model: str
 ) -> Dict[str, Any]:
-    """Гeneрирует квест, используя указанного API-провайдера."""
+    """Генерирует квест, используя указанного API-провайдера."""
     master_prompt = _get_master_prompt(setting_text)
     response_content = None
 
@@ -81,7 +82,7 @@ def create_quest_from_setting(
             response_content = chat_completion.choices[0].message.content
 
         elif api_provider == "gemini":
-            genai.configure(api_key=api_key)  # type: ignore
+            genai.configure(api_key=api_key)  # type: ignore[reportPrivateImportUsage]
             gemini_model = genai.GenerativeModel(model)  # type: ignore
             response = gemini_model.generate_content(master_prompt)
             response_content = response.text
@@ -94,13 +95,56 @@ def create_quest_from_setting(
             logger.error("LLM returned no content.")
             return {"error": "LLM returned no content."}
 
-        return json.loads(response_content)
+        # Clean response content for markdown code blocks
+        json_match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", response_content)
+        if json_match:
+            cleaned_content = json_match.group(1)
+        else:
+            # If no markdown block found, assume the content is raw JSON
+            cleaned_content = response_content
+
+        try:
+            return json.loads(cleaned_content)
+        except json.JSONDecodeError as e:
+            logger.error(
+                f"Failed to parse JSON from {api_provider} ({model}). "
+                f"Raw content (original): '{response_content}'. "
+                f"Cleaned content: '{cleaned_content}'. Error: {e}"
+            )
+            return {
+                "error": "Модель не смогла сгенерировать валидный JSON. "
+                "Попробуйте изменить сеттинг или выбрать другую модель/провайдера."
+                " (Возможно, модель вернула неполный или некорректный JSON)"
+            }
 
     except Exception as e:
         logger.error(
             f"An error occurred while generating quest with {api_provider}: {e}"
         )
-        return {"error": str(e)}
+        error_message_lower = str(e).lower()
+        if "rate limit" in error_message_lower:
+            return {"error": "Превышен лимит запросов к API. Попробуйте позже."}
+        if (
+            "authentication" in error_message_lower
+            or "invalid api key" in error_message_lower
+            or "401" in error_message_lower
+        ):
+            return {"error": "Неверный API ключ. Пожалуйста, проверьте ваш ключ."}
+        # УТОЧНЕНО: Добавлено 'deprecated' и условие '404' в сочетании с 'model' для обработки ошибок устаревших/недоступных моделей
+        if (
+            "model not found" in error_message_lower
+            or "model_not_found" in error_message_lower
+            or "modelnotfounderror" in error_message_lower
+            or "deprecated" in error_message_lower
+            or ("404" in error_message_lower and "model" in error_message_lower)
+        ):
+            return {
+                "error": f"Выбранная модель '{model}' не найдена, недоступна или устарела у провайдера {api_provider}. Попробуйте другую модель."
+            }
+
+        return {
+            "error": f"Произошла ошибка при обращении к API {api_provider}: {str(e)}"
+        }
 
 
 def validate_api_key(api_provider: str, api_key: str) -> Dict[str, Any]:
@@ -115,21 +159,19 @@ def validate_api_key(api_provider: str, api_key: str) -> Dict[str, Any]:
             client.models.list()
             return {"status": "ok"}
         elif api_provider == "gemini":
-            genai.configure(api_key=api_key)  # type: ignore
+            genai.configure(api_key=api_key)  # type: ignore[reportPrivateImportUsage]
             # Проверяем, есть ли доступные модели для генерации текста
             models = [
                 m
-                for m in genai.list_models()  # type: ignore
+                for m in genai.list_models()  # type: ignore[reportPrivateImportUsage]
                 if "generateContent" in m.supported_generation_methods
             ]
             if not models:
                 raise ValueError("No generative models found for this API key.")
             return {"status": "ok"}
         else:
-            return {
-                "status": "error",
-                "message": f"Unknown API provider: {api_provider}",
-            }
+            # ИСПРАВЛЕНО: Изменен формат возврата для соответствия другим ошибкам
+            return {"error": f"Unknown API provider: {api_provider}"}
 
     except Exception as e:
         logger.error(f"API key validation failed for {api_provider}: {e}")
@@ -154,10 +196,10 @@ def get_available_models(api_provider: str, api_key: str) -> Dict[str, Any]:
             models = client.models.list().data
             return {"models": [model.id for model in models]}
         elif api_provider == "gemini":
-            genai.configure(api_key=api_key)  # type: ignore
+            genai.configure(api_key=api_key)  # type: ignore[reportPrivateImportUsage]
             models = [
                 m.name
-                for m in genai.list_models()  # type: ignore
+                for m in genai.list_models()  # type: ignore[reportPrivateImportUsage]
                 if "generateContent" in m.supported_generation_methods
             ]
             return {"models": models}

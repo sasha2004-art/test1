@@ -1,4 +1,6 @@
 from unittest.mock import MagicMock, patch
+import json  # Import json for stringifying mock content
+import re  # Import re for potential future regex needs, though not strictly needed here for tests directly
 
 from services.quest_generator import (
     create_quest_from_setting,
@@ -15,7 +17,7 @@ def test_create_quest_groq_success(mock_groq):
     mock_completion.choices[0].message.content = mock_response_content
     mock_groq.return_value.chat.completions.create.return_value = mock_completion
     result = create_quest_from_setting(
-        "любой сеттинг", "fake_key", "groq", "llama3-8b-8192"
+        "любой сеттинг", "fake_key", "groq", "llama3-88b-8192"
     )
     assert result == {"questTitle": "Успешный тест Groq"}
     mock_groq.return_value.chat.completions.create.assert_called_once()
@@ -56,7 +58,7 @@ def test_create_quest_api_error(mock_groq):
         "любой сеттинг", "fake_key", "groq", "llama3-8b-8192"
     )
     assert "error" in result
-    assert result["error"] == "API Error"
+    assert "Произошла ошибка при обращении к API groq: API Error" in result["error"]
 
 
 @patch("services.quest_generator.Groq")
@@ -72,21 +74,21 @@ def test_create_quest_no_content(mock_groq):
     assert result["error"] == "LLM returned no content."
 
 
-@patch("services.quest_generator.Groq") # ИСПРАВЛЕНО
+@patch("services.quest_generator.Groq")  # ИСПРАВЛЕНО
 def test_validate_key_groq_success(mock_groq):
     """Тестирует успешную валидацию ключа Groq."""
     mock_groq.return_value.models.list.return_value = MagicMock()
     assert validate_api_key("groq", "valid") == {"status": "ok"}
 
 
-@patch("services.quest_generator.openai.OpenAI") # ИСПРАВЛЕНО
+@patch("services.quest_generator.openai.OpenAI")  # ИСПРАВЛЕНО
 def test_validate_key_openai_success(mock_openai):
     """Тестирует успешную валидацию ключа OpenAI."""
     mock_openai.return_value.models.list.return_value = MagicMock()
     assert validate_api_key("openai", "valid") == {"status": "ok"}
 
 
-@patch("services.quest_generator.genai") # ИСПРАВЛЕНО
+@patch("services.quest_generator.genai")  # ИСПРАВЛЕНО
 def test_validate_key_gemini_success(mock_genai):
     """Тестирует успешную валидацию ключа Gemini."""
     mock_model = MagicMock()
@@ -96,7 +98,7 @@ def test_validate_key_gemini_success(mock_genai):
     mock_genai.configure.assert_called_once_with(api_key="valid")
 
 
-@patch("services.quest_generator.genai") # ИСПРАВЛЕНО
+@patch("services.quest_generator.genai")  # ИСПРАВЛЕНО
 def test_validate_key_gemini_no_models(mock_genai):
     """Тестирует валидацию Gemini, когда не найдено подходящих моделей."""
     mock_genai.list_models.return_value = []
@@ -105,7 +107,7 @@ def test_validate_key_gemini_no_models(mock_genai):
     assert "Ошибка проверки ключа" in result["message"]
 
 
-@patch("services.quest_generator.Groq") # ИСПРАВЛЕНО
+@patch("services.quest_generator.Groq")  # ИСПРАВЛЕНО
 def test_validate_key_api_error_401(mock_groq):
     """Тестирует обработку ошибки 401 (неверный ключ)."""
     mock_groq.return_value.models.list.side_effect = Exception("401 Invalid Key")
@@ -113,7 +115,7 @@ def test_validate_key_api_error_401(mock_groq):
     assert result == {"status": "error", "message": "Неверный API ключ."}
 
 
-@patch("services.quest_generator.Groq") # ИСПРАВЛЕНО
+@patch("services.quest_generator.Groq")  # ИСПРАВЛЕНО
 def test_validate_key_generic_api_error(mock_groq):
     """Тестирует обработку общей ошибки API."""
     mock_groq.return_value.models.list.side_effect = Exception("Connection Timeout")
@@ -127,7 +129,8 @@ def test_validate_key_generic_api_error(mock_groq):
 def test_validate_key_unknown_provider():
     """Тестирует валидацию с неизвестным провайдером."""
     result = validate_api_key("foobar", "any_key")
-    assert result == {"status": "error", "message": "Unknown API provider: foobar"}
+    # ИСПРАВЛЕНО: Обновлено ожидаемое значение для соответствия формату {"error": "..."}
+    assert result == {"error": "Unknown API provider: foobar"}
 
 
 @patch("services.quest_generator.Groq")
@@ -173,3 +176,153 @@ def test_get_available_models_api_error(mock_groq):
     mock_groq.return_value.models.list.side_effect = Exception("API Error")
     result = get_available_models("groq", "fake_key")
     assert result == {"error": "API Error"}
+
+
+# --- НОВЫЕ ТЕСТЫ ДЛЯ ОБРАБОТКИ ОШИБОК JSON И API ---
+
+
+@patch("services.quest_generator.Groq")
+def test_create_quest_json_decode_error_raw_content(mock_groq):
+    """Тестирует случай, когда LLM возвращает невалидный, но немаркдаун JSON."""
+    mock_completion = MagicMock()
+    # Simulate invalid JSON without markdown
+    mock_completion.choices[0].message.content = "{this is not json}"
+    mock_groq.return_value.chat.completions.create.return_value = mock_completion
+
+    with patch("services.quest_generator.logger.error") as mock_logger_error:
+        result = create_quest_from_setting(
+            "любой сеттинг", "fake_key", "groq", "llama3-8b-8192"
+        )
+        assert "error" in result
+        assert "Модель не смогла сгенерировать валидный JSON." in result["error"]
+        mock_logger_error.assert_called_once()
+        log_message = mock_logger_error.call_args[0][0]
+        assert "Raw content (original): '{this is not json}'." in log_message
+
+
+@patch("services.quest_generator.genai")
+def test_create_quest_json_decode_error_markdown_valid_json(mock_genai):
+    """Тестирует, что очистка markdown работает и валидный JSON внутри парсится."""
+    mock_response = MagicMock()
+    mock_response.text = '```json\n{"questTitle": "Parsed from markdown"}\n```'
+    mock_model = MagicMock()
+    mock_model.generate_content.return_value = mock_response
+    mock_genai.GenerativeModel.return_value = mock_model
+
+    result = create_quest_from_setting(
+        "любой сеттинг", "fake_key", "gemini", "gemini-pro"
+    )
+    assert result == {"questTitle": "Parsed from markdown"}
+    mock_genai.configure.assert_called_once_with(api_key="fake_key")
+
+
+@patch("services.quest_generator.genai")
+def test_create_quest_json_decode_error_markdown_invalid_json(mock_genai):
+    """Тестирует, что очистка markdown работает, но внутренний JSON невалиден."""
+    mock_response_invalid = MagicMock()
+    mock_response_invalid.text = (
+        '```json\n{"questTitle": "Partial JSON",\n```'  # Invalid JSON
+    )
+    mock_model_invalid = MagicMock()
+    mock_model_invalid.generate_content.return_value = mock_response_invalid
+    mock_genai.GenerativeModel.return_value = mock_model_invalid
+
+    with patch("services.quest_generator.logger.error") as mock_logger_error:
+        result_invalid = create_quest_from_setting(
+            "любой сеттинг", "fake_key", "gemini", "gemini-pro"
+        )
+        assert "error" in result_invalid
+        assert (
+            "Модель не смогла сгенерировать валидный JSON." in result_invalid["error"]
+        )
+        mock_logger_error.assert_called_once()
+        log_message_invalid = mock_logger_error.call_args[0][0]
+        assert (
+            'Raw content (original): \'```json\n{"questTitle": "Partial JSON",\n```\'.'
+            in log_message_invalid
+        )
+        assert (
+            'Cleaned content: \'{"questTitle": "Partial JSON",\'.'
+            in log_message_invalid
+        )
+
+
+@patch("services.quest_generator.Groq")
+def test_create_quest_api_rate_limit_error(mock_groq):
+    """Тестирует обработку ошибки превышения лимита запросов."""
+    mock_groq.return_value.chat.completions.create.side_effect = Exception(
+        "Too many requests, rate limit exceeded"
+    )
+    result = create_quest_from_setting(
+        "любой сеттинг", "fake_key", "groq", "llama3-8b-8192"
+    )
+    assert "error" in result
+    assert "Превышен лимит запросов к API." in result["error"]
+
+
+@patch("services.quest_generator.Groq")
+def test_create_quest_api_invalid_key_error(mock_groq):
+    """Тестирует обработку ошибки неверного API ключа."""
+    mock_groq.return_value.chat.completions.create.side_effect = Exception(
+        "AuthenticationError: Invalid API key"
+    )
+    result = create_quest_from_setting(
+        "любой сеттинг", "fake_key", "groq", "llama3-8b-8192"
+    )
+    assert "error" in result
+    assert "Неверный API ключ. Пожалуйста, проверьте ваш ключ." in result["error"]
+
+
+@patch("services.quest_generator.Groq")
+def test_create_quest_api_model_not_found_error(mock_groq):
+    """Тестирует обработку ошибки "модель не найдена"."""
+    mock_groq.return_value.chat.completions.create.side_effect = Exception(
+        "ModelNotFoundError: Model gemma-7b-it not found"
+    )
+    result = create_quest_from_setting(
+        "любой сеттинг", "fake_key", "groq", "gemma-7b-it"
+    )
+    assert "error" in result
+    # ИСПРАВЛЕНО: Обновлено ожидаемое сообщение об ошибке
+    assert (
+        "Выбранная модель 'gemma-7b-it' не найдена, недоступна или устарела у провайдера groq."
+        in result["error"]
+    )
+
+
+@patch("services.quest_generator.genai")  # Use genai for simulating Gemini errors
+def test_create_quest_api_model_deprecated_error(mock_genai):
+    """Тестирует обработку ошибки "модель устарела"."""
+    mock_model_genai = MagicMock()
+    mock_model_genai.generate_content.side_effect = Exception(
+        "404 Gemini 1.0 Pro Vision has been deprecated on July 12, 2024. Consider switching to different model, for example gemini-1.5-flash."
+    )
+    mock_genai.GenerativeModel.return_value = mock_model_genai
+    mock_genai.configure.return_value = (
+        None  # Ensure configure doesn't raise error itself
+    )
+
+    result = create_quest_from_setting(
+        "любой сеттинг", "fake_key", "gemini", "gemini-1.0-pro-vision"
+    )
+    assert "error" in result
+    assert (
+        "Выбранная модель 'gemini-1.0-pro-vision' не найдена, недоступна или устарела у провайдера gemini."
+        in result["error"]
+    )
+
+
+@patch("services.quest_generator.Groq")
+def test_create_quest_api_general_error(mock_groq):
+    """Тестирует обработку общей, неопознанной ошибки API."""
+    mock_groq.return_value.chat.completions.create.side_effect = Exception(
+        "Some unexpected API error occurred."
+    )
+    result = create_quest_from_setting(
+        "любой сеттинг", "fake_key", "groq", "llama3-8b-8192"
+    )
+    assert "error" in result
+    assert (
+        "Произошла ошибка при обращении к API groq: Some unexpected API error occurred."
+        in result["error"]
+    )

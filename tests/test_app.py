@@ -58,8 +58,9 @@ def test_generate_quest_endpoint_missing_data(client):
     """Тестирует ответ 400 при отсутствии данных в запросе."""
     response = client.post("/generate", json={"setting": "A dark and stormy night"})
     assert response.status_code == 400
-    assert "Missing 'setting', 'api_key', 'api_provider' or 'model'" in response.get_json().get(
-        "error", ""
+    assert (
+        "Missing 'setting', 'api_key', 'api_provider' or 'model'"
+        in response.get_json().get("error", "")
     )
 
 
@@ -99,7 +100,10 @@ def test_validate_api_key_endpoint_failure(client, monkeypatch):
     """Тестирует неудачную валидацию ключа через эндпоинт."""
     monkeypatch.setattr(
         "main.validate_api_key",
-        lambda api_provider, api_key: {"status": "error", "message": "Неверный API ключ."},
+        lambda api_provider, api_key: {
+            "status": "error",
+            "message": "Неверный API ключ.",
+        },
     )
     response = client.post(
         "/validate_api_key", json={"api_provider": "groq", "api_key": "invalid_key"}
@@ -112,9 +116,7 @@ def test_validate_api_key_endpoint_missing_data(client):
     """Тестирует эндпоинт валидации с отсутствующими данными."""
     response = client.post("/validate_api_key", json={"api_provider": "groq"})
     assert response.status_code == 400
-    assert "Missing 'api_key' or 'api_provider'" in response.get_json().get(
-        "error", ""
-    )
+    assert "Missing 'api_key' or 'api_provider'" in response.get_json().get("error", "")
 
 
 def test_validate_api_key_endpoint_empty_key(client):
@@ -132,7 +134,9 @@ def test_validate_api_key_endpoint_empty_key(client):
 def test_get_available_models_endpoint_success(client, monkeypatch):
     """Тестирует успешное получение списка моделей."""
     mock_models = {"models": ["model1", "model2"]}
-    monkeypatch.setattr("main.get_available_models", lambda api_provider, api_key: mock_models)
+    monkeypatch.setattr(
+        "main.get_available_models", lambda api_provider, api_key: mock_models
+    )
     response = client.post(
         "/api/models", json={"api_provider": "groq", "api_key": "valid_key"}
     )
