@@ -1,12 +1,26 @@
 import json
 import logging
 from groq import Groq
+import openai
+import google.generativeai as genai
 
 logger = logging.getLogger(__name__)
 
 
-def create_quest_from_setting(setting_text: str, api_key: str):
-    client = Groq(api_key=api_key)
+def create_quest_from_setting(setting_text: str, api_key: str, api_provider: str):
+    client = None
+    model = ""
+    if api_provider == "groq":
+        client = Groq(api_key=api_key)
+        model = "llama3-8b-8192"
+    elif api_provider == "openai":
+        openai.api_key = api_key
+        client = openai.ChatCompletion
+        model = "gpt-4"
+    elif api_provider == "gemini":
+        genai.configure(api_key=api_key)
+        client = genai.GenerativeModel('gemini-pro')
+        model = "gemini-pro"
 
     master_prompt = f"""
   Ты — профессиональный геймдизайнер и сценарист. Твоя задача — создать структуру нелинейного квеста в формате JSON на основе предоставленного сеттинга.
@@ -44,21 +58,26 @@ def create_quest_from_setting(setting_text: str, api_key: str):
   ---
 
   Теперь сгенерируй JSON для этого квеста на русском языке.
-  """ 
+  """
 
     try:
-        chat_completion = client.chat.completions.create(
-            messages=[
-                {
-                    "role": "user",
-                    "content": master_prompt,
-                }
-            ],
-            model="llama3-8b-8192",
-            temperature=0.7,
-            response_format={"type": "json_object"},
-        )
-        response_content = chat_completion.choices[0].message.content
+        if api_provider == "gemini":
+            response = client.generate_content(master_prompt)
+            response_content = response.text
+        else:
+            chat_completion = client.create(
+                messages=[
+                    {
+                        "role": "user",
+                        "content": master_prompt,
+                    }
+                ],
+                model=model,
+                temperature=0.7,
+                response_format={"type": "json_object"},
+            )
+            response_content = chat_completion.choices[0].message.content
+
         if response_content is None:
             logger.error("LLM returned no content.")
             return {"error": "LLM returned no content."}

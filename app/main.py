@@ -23,19 +23,25 @@ def index():
     return render_template("index.html")
 
 
+@app.route("/api_keys")
+def api_keys():
+    return render_template("api_keys.html")
+
+
 @app.route("/generate", methods=["POST"])
 def generate_quest_endpoint():
     data = request.get_json()
-    if not data or "setting" not in data or "api_key" not in data:
+    if not data or "setting" not in data or "api_key" not in data or "api_provider" not in data:
         return (
-            jsonify({"error": "Missing 'setting' or 'api_key' in request body"}),
+            jsonify({"error": "Missing 'setting', 'api_key' or 'api_provider' in request body"}),
             400,
         )
 
     setting = data["setting"]
     api_key = data["api_key"]
+    api_provider = data["api_provider"]
 
-    quest_json = create_quest_from_setting(setting, api_key)
+    quest_json = create_quest_from_setting(setting, api_key, api_provider)
 
     if "error" in quest_json:
         return jsonify(quest_json), 500
