@@ -40,7 +40,7 @@ input[type="password"], textarea {
 button {
     display: block;
     width: 100%;
-    padding: 12px;
+    padding: 0px;
     background-color: #007bff;
     color: white;
     border: none;
