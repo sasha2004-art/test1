@@ -3,12 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QuestGenerator AI</title>
+    <title>Plotix</title>
+    <link rel="icon" href="{{ url_for('static', filename='img/iconca.svg') }}" type="image/svg+xml">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
     <div class="main-layout">
         <aside class="sidebar">
+            <div class="logo-container">
+                <img src="{{ url_for('static', filename='img/iconca.svg') }}" alt="Plotix Logo" class="logo-svg">
+                <h1>Plotix</h1>
+            </div>
             <div class="chat-header">
                 <h2>Чаты</h2>
                 <button id="new-chat-btn">+</button>
