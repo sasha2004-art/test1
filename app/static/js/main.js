@@ -22,6 +22,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    const sidebar = document.querySelector('.sidebar');
+
+    sidebar.addEventListener('mouseenter', () => {
+        sidebar.classList.remove('collapsed');
+    });
+
+    sidebar.addEventListener('mouseleave', () => {
+        sidebar.classList.add('collapsed');
+    });
     let chatsVisible = false;
 
     function renderChatList() {
@@ -39,7 +48,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const chatTitle = document.createElement('span');
-            chatTitle.textContent = chat.title;
+            chatTitle.classList.add('chat-title');
+            chatTitle.textContent = chat.title.length > 30 ? chat.title.substring(0, 27) + '...' : chat.title;
             chatDiv.appendChild(chatTitle);
 
             const editBtn = document.createElement('button');
@@ -75,8 +85,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            chatDiv.appendChild(editBtn);
-            chatDiv.appendChild(deleteBtn);
+            const chatActions = document.createElement('div');
+            chatActions.classList.add('chat-actions');
+            chatActions.appendChild(editBtn);
+            chatActions.appendChild(deleteBtn);
+            chatDiv.appendChild(chatActions);
 
             chatDiv.dataset.chatId = id;
             chatDiv.addEventListener('click', () => {

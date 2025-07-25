@@ -39,7 +39,7 @@ input[type="password"], textarea {
 button {
     display: block;
     width: 100%;
-    padding: 0px;
+    padding: 10px;
     background-color: #007bff;
     color: white;
     border: none;
@@ -113,8 +113,14 @@ pre {
     overflow: hidden;
 }
 
-.sidebar:not(:hover) {
+.sidebar.collapsed {
     width: 5rem;
+}
+
+.sidebar.collapsed .logo-container h1,
+.sidebar.collapsed .chat-header h2,
+.sidebar.collapsed #new-chat-btn {
+    display: none;
 }
 .logo-container {
     display: flex;
@@ -163,23 +169,37 @@ pre {
     cursor: pointer;
     border-radius: 4px;
     margin-bottom: 5px;
-}
-.chat-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+
+.chat-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-grow: 1;
+    padding-right: 10px;
 }
 
 .chat-item:hover, .chat-item.active {
     background-color: #2a2a2a;
 }
 
-.chat-item .edit-btn, .chat-item .delete-btn {
+.chat-item .chat-actions {
     display: none;
+}
+
+.chat-item:hover .chat-actions {
+    display: flex;
+}
+
+.chat-item .edit-btn, .chat-item .delete-btn {
     background: none;
     border: none;
     cursor: pointer;
     font-size: 16px;
+    padding: 5px;
 }
 
 .chat-item:hover .edit-btn, .chat-item:hover .delete-btn {
