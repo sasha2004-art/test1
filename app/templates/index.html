@@ -7,39 +7,51 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <div class="container">
-        <h1>QuestGenerator AI</h1>
-        <p>Введите сеттинг для вашего квеста и выберите провайдера для генерации.</p>
-
-        <div class="form-group">
-            <label for="setting-input">Описание сеттинга:</label>
-            <textarea id="setting-input" rows="10" placeholder="Например: Игрок - детектив в нуарном городе, расследующий загадочное исчезновение певицы из джаз-клуба..."></textarea>
-        </div>
-
-        <div class="form-group">
-            <label>Выберите API провайдера:</label>
-            <div class="provider-selector">
-                <label><input type="radio" name="api_provider" value="groq" checked> Groq</label>
-                <label><input type="radio" name="api_provider" value="openai"> OpenAI</label>
-                <label><input type="radio" name="api_provider" value="gemini"> Gemini</label>
+    <div class="main-layout">
+        <aside class="sidebar">
+            <div class="chat-header">
+                <h2>Чаты</h2>
+                <button id="new-chat-btn">+</button>
             </div>
-        </div>
+            <div class="chat-list" id="chat-list">
+                <!-- Chat items will be dynamically added here -->
+            </div>
+            <div class="sidebar-footer">
+                <a href="/api_keys" class="settings-link">Настроить API Ключи</a>
+            </div>
+        </aside>
+        <main class="chat-container">
+            <div class="container">
+                <h1>QuestGenerator AI</h1>
+                <p>Введите сеттинг для вашего квеста и выберите провайдера для генерации.</p>
 
-        <div class="api-key-management">
-            <a href="/api_keys">Настроить API Ключи</a>
-        </div>
+                <div class="form-group">
+                    <label for="setting-input">Описание сеттинга:</label>
+                    <textarea id="setting-input" rows="10" placeholder="Например: Игрок - детектив в нуарном городе, расследующий загадочное исчезновение певицы из джаз-клуба..."></textarea>
+                </div>
 
-        <div class="form-group" id="model-selector-group" style="display: none;">
-            <label for="model-selector">Выберите модель:</label>
-            <select id="model-selector" class="provider-selector"></select>
-        </div>
+                <div class="form-group">
+                    <label>Выберите API провайдера:</label>
+                    <div class="provider-selector">
+                        <label><input type="radio" name="api_provider" value="groq" checked> Groq</label>
+                        <label><input type="radio" name="api_provider" value="openai"> OpenAI</label>
+                        <label><input type="radio" name="api_provider" value="gemini"> Gemini</label>
+                    </div>
+                </div>
 
-        <button id="generate-btn">Сгенерировать Квест</button>
+                <div class="form-group" id="model-selector-group" style="display: none;">
+                    <label for="model-selector">Выберите модель:</label>
+                    <select id="model-selector" class="provider-selector"></select>
+                </div>
 
-        <div class="result-container">
-            <h2>Результат:</h2>
-            <pre id="result-box">Здесь появится сгенерированный JSON...</pre>
-        </div>
+                <button id="generate-btn">Сгенерировать Квест</button>
+
+                <div class="result-container">
+                    <h2>Результат:</h2>
+                    <pre id="result-box">Здесь появится сгенерированный JSON...</pre>
+                </div>
+            </div>
+        </main>
     </div>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>

@@ -97,3 +97,56 @@ pre {
 .api-key-management a:hover {
     text-decoration: underline;
 }
+.main-layout {
+    display: flex;
+    height: 100vh;
+}
+.sidebar {
+    width: 260px;
+    background-color: #1e1e1e;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #333;
+}
+.chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+#new-chat-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    font-size: 20px;
+    cursor: pointer;
+}
+.chat-list {
+    flex-grow: 1;
+    overflow-y: auto;
+}
+.chat-item {
+    padding: 10px;
+    cursor: pointer;
+    border-radius: 4px;
+    margin-bottom: 5px;
+}
+.chat-item:hover, .chat-item.active {
+    background-color: #2a2a2a;
+}
+.sidebar-footer {
+    margin-top: auto;
+}
+.settings-link {
+    color: #00aaff;
+    text-decoration: none;
+}
+.chat-container {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
