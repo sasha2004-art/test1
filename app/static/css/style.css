@@ -142,6 +142,9 @@ pre {
     height: 30px;
     font-size: 20px;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 .chat-list {
     flex-grow: 1;
