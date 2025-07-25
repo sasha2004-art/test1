@@ -1,4 +1,3 @@
-# --- НАЧАЛО ФАЙЛА: start.py (ПРАВИЛЬНЫЙ КОД) ---
 import os
 import sys
 import subprocess
@@ -93,4 +92,3 @@ def main():
 if __name__ == "__main__":
     main()
 
-# --- КОНЕЦ ФАЙЛА: start.py ---

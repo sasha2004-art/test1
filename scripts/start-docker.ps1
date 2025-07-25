@@ -24,7 +24,6 @@ if ($lastexitcode -eq 0) {
     Write-Host "Для остановки контейнеров используйте: " -NoNewline; Write-Host "docker compose -f docker/docker-compose.yml down" -ForegroundColor Cyan
     exit 0
 } else {
-    # Если скрипт завершился с ошибкой
     Write-Host "`n❌ ❌ ❌ ВЕРИФИКАЦИЯ ПРОВАЛЕНА! ❌ ❌ ❌" -ForegroundColor Red
     Write-Host "Останавливаем и удаляем контейнеры для чистоты окружения..." -ForegroundColor Yellow
     docker compose -f $ComposeFile down
