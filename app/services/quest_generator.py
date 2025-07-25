@@ -53,9 +53,9 @@ def _get_master_prompt(setting_text: str) -> str:
 
 
 def create_quest_from_setting(
-    setting_text: str, api_key: str, api_provider: str
+    setting_text: str, api_key: str, api_provider: str, model: str
 ) -> Dict[str, Any]:
-    """Генерирует квест, используя указанного API-провайдера."""
+    """Гeneрирует квест, используя указанного API-провайдера."""
     master_prompt = _get_master_prompt(setting_text)
     response_content = None
 
@@ -64,7 +64,7 @@ def create_quest_from_setting(
             client = Groq(api_key=api_key)
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": master_prompt}],
-                model="llama3-8b-8192",
+                model=model,
                 temperature=0.7,
                 response_format={"type": "json_object"},
             )
@@ -74,7 +74,7 @@ def create_quest_from_setting(
             client = openai.OpenAI(api_key=api_key)
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": master_prompt}],
-                model="gpt-4",
+                model=model,
                 temperature=0.7,
                 response_format={"type": "json_object"},
             )
@@ -82,8 +82,8 @@ def create_quest_from_setting(
 
         elif api_provider == "gemini":
             genai.configure(api_key=api_key)  # type: ignore
-            model = genai.GenerativeModel("gemini-pro")  # type: ignore
-            response = model.generate_content(master_prompt)
+            gemini_model = genai.GenerativeModel(model)  # type: ignore
+            response = gemini_model.generate_content(master_prompt)
             response_content = response.text
 
         else:
@@ -140,3 +140,29 @@ def validate_api_key(api_provider: str, api_key: str) -> Dict[str, Any]:
             "status": "error",
             "message": "Ошибка проверки ключа. См. логи сервера.",
         }
+
+
+def get_available_models(api_provider: str, api_key: str) -> Dict[str, Any]:
+    """Получает список доступных моделей для указанного провайдера."""
+    try:
+        if api_provider == "groq":
+            client = Groq(api_key=api_key)
+            models = client.models.list().data
+            return {"models": [model.id for model in models]}
+        elif api_provider == "openai":
+            client = openai.OpenAI(api_key=api_key)
+            models = client.models.list().data
+            return {"models": [model.id for model in models]}
+        elif api_provider == "gemini":
+            genai.configure(api_key=api_key)  # type: ignore
+            models = [
+                m.name
+                for m in genai.list_models()  # type: ignore
+                if "generateContent" in m.supported_generation_methods
+            ]
+            return {"models": models}
+        else:
+            return {"error": f"Unknown API provider: {api_provider}"}
+    except Exception as e:
+        logger.error(f"Failed to get models for {api_provider}: {e}")
+        return {"error": str(e)}

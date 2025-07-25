@@ -1,7 +1,11 @@
 import os
 import logging
 from flask import Flask, request, jsonify, render_template
-from services.quest_generator import create_quest_from_setting, validate_api_key
+from services.quest_generator import (
+    create_quest_from_setting,
+    validate_api_key,
+    get_available_models,
+)
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
 
@@ -36,11 +40,12 @@ def generate_quest_endpoint():
         or "setting" not in data
         or "api_key" not in data
         or "api_provider" not in data
+        or "model" not in data
     ):
         return (
             jsonify(
                 {
-                    "error": "Missing 'setting', 'api_key' or 'api_provider' in request body"
+                    "error": "Missing 'setting', 'api_key', 'api_provider' or 'model' in request body"
                 }
             ),
             400,
@@ -49,8 +54,9 @@ def generate_quest_endpoint():
     setting = data["setting"]
     api_key = data["api_key"]
     api_provider = data["api_provider"]
+    model = data["model"]
 
-    quest_json = create_quest_from_setting(setting, api_key, api_provider)
+    quest_json = create_quest_from_setting(setting, api_key, api_provider, model)
 
     if "error" in quest_json:
         return jsonify(quest_json), 500
@@ -73,3 +79,20 @@ def validate_api_key_endpoint():
     result = validate_api_key(api_provider=api_provider, api_key=api_key)
 
     return jsonify(result)
+
+
+@app.route("/api/models", methods=["POST"])
+def available_models_endpoint():
+    data = request.get_json()
+    if not data or "api_key" not in data or "api_provider" not in data:
+        return jsonify({"error": "Missing 'api_key' or 'api_provider'"}), 400
+
+    api_key = data["api_key"]
+    api_provider = data["api_provider"]
+
+    if not api_key:
+        return jsonify({"error": "API ключ не может быть пустым."})
+
+    models = get_available_models(api_provider=api_provider, api_key=api_key)
+
+    return jsonify(models)

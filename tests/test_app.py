@@ -39,7 +39,7 @@ def test_generate_quest_endpoint_success(client, monkeypatch):
     }
     monkeypatch.setattr(
         "main.create_quest_from_setting",
-        lambda setting, api_key, api_provider: mock_quest,
+        lambda setting, api_key, api_provider, model: mock_quest,
     )
     response = client.post(
         "/generate",
@@ -47,6 +47,7 @@ def test_generate_quest_endpoint_success(client, monkeypatch):
             "setting": "A dark and stormy night",
             "api_key": "test_key",
             "api_provider": "groq",
+            "model": "llama3-8b-8192",
         },
     )
     assert response.status_code == 200
@@ -57,7 +58,7 @@ def test_generate_quest_endpoint_missing_data(client):
     """Тестирует ответ 400 при отсутствии данных в запросе."""
     response = client.post("/generate", json={"setting": "A dark and stormy night"})
     assert response.status_code == 400
-    assert "Missing 'setting', 'api_key' or 'api_provider'" in response.get_json().get(
+    assert "Missing 'setting', 'api_key', 'api_provider' or 'model'" in response.get_json().get(
         "error", ""
     )
 
@@ -67,11 +68,16 @@ def test_generate_quest_endpoint_generator_error(client, monkeypatch):
     error_response = {"error": "Произошла ошибка генерации"}
     monkeypatch.setattr(
         "main.create_quest_from_setting",
-        lambda setting, api_key, api_provider: error_response,
+        lambda setting, api_key, api_provider, model: error_response,
     )
     response = client.post(
         "/generate",
-        json={"setting": "любой", "api_key": "любой", "api_provider": "groq"},
+        json={
+            "setting": "любой",
+            "api_key": "любой",
+            "api_provider": "groq",
+            "model": "llama3-8b-8192",
+        },
     )
     assert response.status_code == 500
     assert response.get_json() == error_response
@@ -121,3 +127,34 @@ def test_validate_api_key_endpoint_empty_key(client):
         "status": "error",
         "message": "API ключ не может быть пустым.",
     }
+
+
+def test_get_available_models_endpoint_success(client, monkeypatch):
+    """Тестирует успешное получение списка моделей."""
+    mock_models = {"models": ["model1", "model2"]}
+    monkeypatch.setattr("main.get_available_models", lambda api_provider, api_key: mock_models)
+    response = client.post(
+        "/api/models", json={"api_provider": "groq", "api_key": "valid_key"}
+    )
+    assert response.status_code == 200
+    assert response.get_json() == mock_models
+
+
+def test_get_available_models_endpoint_failure(client, monkeypatch):
+    """Тестирует неудачное получение списка моделей."""
+    error_response = {"error": "Failed to fetch"}
+    monkeypatch.setattr(
+        "main.get_available_models", lambda api_provider, api_key: error_response
+    )
+    response = client.post(
+        "/api/models", json={"api_provider": "groq", "api_key": "invalid_key"}
+    )
+    assert response.status_code == 200
+    assert response.get_json() == error_response
+
+
+def test_get_available_models_endpoint_missing_data(client):
+    """Тестирует эндпоинт получения моделей с отсутствующими данными."""
+    response = client.post("/api/models", json={"api_provider": "groq"})
+    assert response.status_code == 400
+    assert "Missing 'api_key' or 'api_provider'" in response.get_json().get("error", "")
