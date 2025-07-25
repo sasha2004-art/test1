@@ -4,7 +4,7 @@ echo "--- 1. Formatting check with black ---"
 docker compose -f docker/docker-compose.yml exec web black --check .
 
 echo "--- 2. Linting with flake8 ---"
-docker compose -f docker/docker-compose.yml exec web flake8 . --count --ignore=E501,F401 --show-source --statistics
+docker compose -f docker/docker-compose.yml exec web flake8 . --count --ignore=E501,W503 --show-source --statistics
 
 echo "--- 3. Fast type checking with pyright ---"
 docker compose -f docker/docker-compose.yml exec web pyright

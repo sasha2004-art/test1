@@ -69,3 +69,31 @@ pre {
     max-height: 500px;
     overflow-y: auto;
 }
+.provider-selector {
+    display: flex;
+    gap: 20px;
+    background-color: #2a2a2a;
+    padding: 10px 15px;
+    border-radius: 4px;
+    border: 1px solid #444;
+}
+
+.provider-selector label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 0;
+    cursor: pointer;
+}
+
+.api-key-management {
+    margin-bottom: 20px;
+}
+
+.api-key-management a {
+    color: #00aaff;
+    text-decoration: none;
+}
+.api-key-management a:hover {
+    text-decoration: underline;
+}

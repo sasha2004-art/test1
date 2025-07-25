@@ -5,36 +5,94 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>API Ключи</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .key-group { display: flex; align-items: center; gap: 10px; }
+        .key-group input { flex-grow: 1; }
+        .key-group button { width: 120px; font-size: 14px; padding: 10px; }
+        .status-message { font-size: 14px; height: 20px; }
+        .status-ok { color: #28a745; }
+        .status-error { color: #dc3545; }
+    </style>
 </head>
 <body>
     <div class="container">
         <h1>Настройка API Ключей</h1>
-        <p>Введите ваши API-ключи для генерации квестов.</p>
+        <p>Введите ваши API-ключи, сохраните и проверьте их валидность.</p>
 
         <div class="form-group">
             <label for="groq-api-key-input">Groq API Ключ:</label>
-            <input type="password" id="groq-api-key-input" placeholder="gsk_...">
+            <div class="key-group">
+                <input type="password" id="groq-api-key-input" placeholder="gsk_...">
+                <button id="check-groq-btn" data-provider="groq">Проверить</button>
+            </div>
+            <span class="status-message" id="groq-status"></span>
         </div>
 
         <div class="form-group">
             <label for="openai-api-key-input">OpenAI API Ключ:</label>
-            <input type="password" id="openai-api-key-input" placeholder="sk_...">
+            <div class="key-group">
+                <input type="password" id="openai-api-key-input" placeholder="sk_...">
+                <button id="check-openai-btn" data-provider="openai">Проверить</button>
+            </div>
+            <span class="status-message" id="openai-status"></span>
         </div>
 
         <div class="form-group">
             <label for="gemini-api-key-input">Google Gemini API Ключ:</label>
-            <input type="password" id="gemini-api-key-input" placeholder="AIzaSy...">
+            <div class="key-group">
+                <input type="password" id="gemini-api-key-input" placeholder="AIzaSy...">
+                <button id="check-gemini-btn" data-provider="gemini">Проверить</button>
+            </div>
+            <span class="status-message" id="gemini-status"></span>
         </div>
 
         <button id="save-keys-btn">Сохранить Ключи</button>
         <a href="/">Назад к генератору</a>
     </div>
     <script>
+        // Функция для проверки ключа
+        async function checkKey(provider) {
+            const input = document.getElementById(`${provider}-api-key-input`);
+            const statusEl = document.getElementById(`${provider}-status`);
+            const apiKey = input.value.trim();
+
+            statusEl.textContent = 'Проверка...';
+            statusEl.className = 'status-message';
+
+            if (!apiKey) {
+                statusEl.textContent = 'Ключ не введен.';
+                statusEl.classList.add('status-error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/validate_api_key', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ api_provider: provider, api_key: apiKey }),
+                });
+                const data = await response.json();
+
+                if (data.status === 'ok') {
+                    statusEl.textContent = 'Ключ действителен!';
+                    statusEl.classList.add('status-ok');
+                } else {
+                    statusEl.textContent = `Ошибка: ${data.message || 'Неизвестная ошибка'}`;
+                    statusEl.classList.add('status-error');
+                }
+            } catch (error) {
+                statusEl.textContent = 'Сетевая ошибка.';
+                statusEl.classList.add('status-error');
+            }
+        }
+
+        // Сохранение ключей
         document.getElementById('save-keys-btn').addEventListener('click', () => {
             const groqApiKey = document.getElementById('groq-api-key-input').value;
             const openaiApiKey = document.getElementById('openai-api-key-input').value;
             const geminiApiKey = document.getElementById('gemini-api-key-input').value;
 
+            // Сохраняем только если поле не пустое
             if (groqApiKey) localStorage.setItem('groq_api_key', groqApiKey);
             if (openaiApiKey) localStorage.setItem('openai_api_key', openaiApiKey);
             if (geminiApiKey) localStorage.setItem('gemini_api_key', geminiApiKey);
@@ -43,13 +101,13 @@
         });
 
         document.addEventListener('DOMContentLoaded', () => {
-            const groqApiKey = localStorage.getItem('groq_api_key');
-            const openaiApiKey = localStorage.getItem('openai_api_key');
-            const geminiApiKey = localStorage.getItem('gemini_api_key');
+            document.getElementById('groq-api-key-input').value = localStorage.getItem('groq_api_key') || '';
+            document.getElementById('openai-api-key-input').value = localStorage.getItem('openai_api_key') || '';
+            document.getElementById('gemini-api-key-input').value = localStorage.getItem('gemini_api_key') || '';
 
-            if (groqApiKey) document.getElementById('groq-api-key-input').value = groqApiKey;
-            if (openaiApiKey) document.getElementById('openai-api-key-input').value = openaiApiKey;
-            if (geminiApiKey) document.getElementById('gemini-api-key-input').value = geminiApiKey;
+            document.getElementById('check-groq-btn').addEventListener('click', () => checkKey('groq'));
+            document.getElementById('check-openai-btn').addEventListener('click', () => checkKey('openai'));
+            document.getElementById('check-gemini-btn').addEventListener('click', () => checkKey('gemini'));
         });
     </script>
 </body>

@@ -11,6 +11,22 @@ def client():
         yield client
 
 
+def test_index_route(client):
+    """Тестирует, что главная страница загружается успешно."""
+    response = client.get("/")
+    assert response.status_code == 200
+    # Эта строка корректна, так как "QuestGenerator AI" содержит только ASCII
+    assert b"QuestGenerator AI" in response.data
+
+
+def test_api_keys_route(client):
+    """Тестирует, что страница с ключами API загружается успешно."""
+    response = client.get("/api_keys")
+    assert response.status_code == 200
+    # ИСПРАВЛЕНО: Строка с кириллицей кодируется в байты перед проверкой
+    assert "Настройка API Ключей".encode("utf-8") in response.data
+
+
 def test_generate_quest_endpoint_success(client, monkeypatch):
     """
     Тестирует успешный ответ от эндпоинта /generate,
@@ -21,39 +37,29 @@ def test_generate_quest_endpoint_success(client, monkeypatch):
         "startNodeId": "1",
         "nodes": [],
     }
-
     monkeypatch.setattr(
         "main.create_quest_from_setting",
-        lambda setting, api_key: mock_quest,
+        lambda setting, api_key, api_provider: mock_quest,
     )
-
-    request_payload = {
-        "setting": "A dark and stormy night",
-        "api_key": "test_key",
-    }
-
     response = client.post(
         "/generate",
-        data=json.dumps(request_payload),
-        content_type="application/json",
+        json={
+            "setting": "A dark and stormy night",
+            "api_key": "test_key",
+            "api_provider": "groq",
+        },
     )
-
     assert response.status_code == 200
     assert response.get_json() == mock_quest
 
 
 def test_generate_quest_endpoint_missing_data(client):
     """Тестирует ответ 400 при отсутствии данных в запросе."""
-    response = client.post(
-        "/generate",
-        data=json.dumps({"setting": "A dark and stormy night"}),
-        content_type="application/json",
-    )
-
+    response = client.post("/generate", json={"setting": "A dark and stormy night"})
     assert response.status_code == 400
-    assert response.get_json() == {
-        "error": "Missing 'setting' or 'api_key' in request body"
-    }
+    assert "Missing 'setting', 'api_key' or 'api_provider'" in response.get_json().get(
+        "error", ""
+    )
 
 
 def test_generate_quest_endpoint_generator_error(client, monkeypatch):
@@ -61,16 +67,57 @@ def test_generate_quest_endpoint_generator_error(client, monkeypatch):
     error_response = {"error": "Произошла ошибка генерации"}
     monkeypatch.setattr(
         "main.create_quest_from_setting",
-        lambda setting, api_key: error_response
+        lambda setting, api_key, api_provider: error_response,
     )
-
-    request_payload = {"setting": "любой", "api_key": "любой"}
-
     response = client.post(
         "/generate",
-        data=json.dumps(request_payload),
-        content_type="application/json",
+        json={"setting": "любой", "api_key": "любой", "api_provider": "groq"},
     )
-
     assert response.status_code == 500
     assert response.get_json() == error_response
+
+
+def test_validate_api_key_endpoint_success(client, monkeypatch):
+    """Тестирует успешную валидацию ключа через эндпоинт."""
+    monkeypatch.setattr(
+        "main.validate_api_key", lambda api_provider, api_key: {"status": "ok"}
+    )
+    response = client.post(
+        "/validate_api_key", json={"api_provider": "groq", "api_key": "valid_key"}
+    )
+    assert response.status_code == 200
+    assert response.get_json() == {"status": "ok"}
+
+
+def test_validate_api_key_endpoint_failure(client, monkeypatch):
+    """Тестирует неудачную валидацию ключа через эндпоинт."""
+    monkeypatch.setattr(
+        "main.validate_api_key",
+        lambda api_provider, api_key: {"status": "error", "message": "Неверный API ключ."},
+    )
+    response = client.post(
+        "/validate_api_key", json={"api_provider": "groq", "api_key": "invalid_key"}
+    )
+    assert response.status_code == 200
+    assert response.get_json() == {"status": "error", "message": "Неверный API ключ."}
+
+
+def test_validate_api_key_endpoint_missing_data(client):
+    """Тестирует эндпоинт валидации с отсутствующими данными."""
+    response = client.post("/validate_api_key", json={"api_provider": "groq"})
+    assert response.status_code == 400
+    assert "Missing 'api_key' or 'api_provider'" in response.get_json().get(
+        "error", ""
+    )
+
+
+def test_validate_api_key_endpoint_empty_key(client):
+    """Тестирует эндпоинт валидации с пустым ключом."""
+    response = client.post(
+        "/validate_api_key", json={"api_provider": "groq", "api_key": ""}
+    )
+    assert response.status_code == 200
+    assert response.get_json() == {
+        "status": "error",
+        "message": "API ключ не может быть пустым.",
+    }

@@ -10,3 +10,5 @@ pyright
 semgrep
 pip-audit
 pytest-cov
+openai
+google-generativeai

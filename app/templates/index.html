@@ -1,4 +1,3 @@
-<!-- quest-generator/backend/templates/index.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -10,11 +9,20 @@
 <body>
     <div class="container">
         <h1>QuestGenerator AI</h1>
-        <p>Введите сеттинг для вашего квеста и API-ключ для его генерации.</p>
+        <p>Введите сеттинг для вашего квеста и выберите провайдера для генерации.</p>
 
         <div class="form-group">
             <label for="setting-input">Описание сеттинга:</label>
             <textarea id="setting-input" rows="10" placeholder="Например: Игрок - детектив в нуарном городе, расследующий загадочное исчезновение певицы из джаз-клуба..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Выберите API провайдера:</label>
+            <div class="provider-selector">
+                <label><input type="radio" name="api_provider" value="groq" checked> Groq</label>
+                <label><input type="radio" name="api_provider" value="openai"> OpenAI</label>
+                <label><input type="radio" name="api_provider" value="gemini"> Gemini</label>
+            </div>
         </div>
 
         <div class="api-key-management">

@@ -5,27 +5,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
     generateBtn.addEventListener('click', async () => {
         const setting = settingInput.value.trim();
+        const selectedProvider = document.querySelector('input[name="api_provider"]:checked').value;
 
-        const groqApiKey = localStorage.getItem('groq_api_key');
-        const openaiApiKey = localStorage.getItem('openai_api_key');
-        const geminiApiKey = localStorage.getItem('gemini_api_key');
+        let apiKey;
+        const apiProvider = selectedProvider;
 
-        let apiKey = groqApiKey || openaiApiKey || geminiApiKey;
-        let apiProvider = '';
-
-        if (groqApiKey) {
-            apiKey = groqApiKey;
-            apiProvider = 'groq';
-        } else if (openaiApiKey) {
-            apiKey = openaiApiKey;
-            apiProvider = 'openai';
-        } else if (geminiApiKey) {
-            apiKey = geminiApiKey;
-            apiProvider = 'gemini';
+        switch (apiProvider) {
+            case 'groq':
+                apiKey = localStorage.getItem('groq_api_key');
+                break;
+            case 'openai':
+                apiKey = localStorage.getItem('openai_api_key');
+                break;
+            case 'gemini':
+                apiKey = localStorage.getItem('gemini_api_key');
+                break;
+            default:
+                apiKey = null;
         }
 
-        if (!setting || !apiKey) {
-            alert('Пожалуйста, введите сеттинг и настройте хотя бы один API-ключ.');
+        if (!setting) {
+            alert('Пожалуйста, введите сеттинг.');
+            return;
+        }
+        
+        if (!apiKey) {
+            alert(`API-ключ для провайдера "${apiProvider}" не найден. Пожалуйста, добавьте его на странице настройки ключей.`);
+            window.location.href = '/api_keys'; // Перенаправляем на страницу ключей
             return;
         }
 
