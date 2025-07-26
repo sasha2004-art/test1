@@ -2,6 +2,11 @@ import os
 import logging
 from flask import Flask, request, jsonify, render_template
 from werkzeug.utils import secure_filename
+from dotenv import load_dotenv
+
+# Загружаем переменные из .env файла
+load_dotenv()
+
 from services.quest_generator import (
     create_quest_from_setting,
     validate_api_key,
@@ -10,29 +15,27 @@ from services.quest_generator import (
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
 
+# Определяем, включены ли локальные LLM
+USE_LOCAL_LLM = os.getenv("USE_LOCAL_LLM", "false").lower() == "true"
+
 if __name__ != "__main__":
     gunicorn_logger = logging.getLogger("gunicorn.error")
     app.logger.handlers = gunicorn_logger.handlers
     app.logger.setLevel(gunicorn_logger.level)
 
-    port = os.getenv("EXTERNAL_PORT", "5001")
-
-    app.logger.info("=" * 60)
-    app.logger.info("  AI Quest Generator запущен!")
-    app.logger.info(f"  Для доступа к приложению откройте: http://localhost:{port}")
-    app.logger.info("=" * 60)
-
-
 @app.route("/")
 def index():
-    return render_template("index.html")
-
+    # Передаем флаг в шаблон
+    return render_template("index.html", use_local_llm=USE_LOCAL_LLM)
 
 @app.route("/settings")
 def settings():
-    return render_template("settings.html")
+    # Передаем флаг в шаблон
+    return render_template("settings.html", use_local_llm=USE_LOCAL_LLM)
 
-
+# ... (остальные эндпоинты остаются без изменений)
+# Копируйте generate_quest_endpoint, validate_api_key_endpoint, available_models_endpoint
+# из вашей предыдущей рабочей версии, они не меняются.
 @app.route("/generate", methods=["POST"])
 def generate_quest_endpoint():
     data = request.get_json()
@@ -97,37 +100,3 @@ def available_models_endpoint():
     models = get_available_models(api_provider=api_provider, api_key=api_key)
 
     return jsonify(models)
-
-
-@app.route("/api/upload_model", methods=["POST"])
-def upload_model_endpoint():
-    """Эндпоинт для загрузки .gguf файлов моделей."""
-    if "model_file" not in request.files:
-        return jsonify({"error": "No file part in the request"}), 400
-
-    file = request.files["model_file"]
-
-    if file.filename == "":
-        return jsonify({"error": "No selected file"}), 400
-
-    if file and file.filename and file.filename.endswith(".gguf"):
-        # Используем secure_filename для предотвращения атак
-        filename = secure_filename(file.filename)
-        # Путь внутри контейнера, определенный в docker-compose.yml
-        model_dir = os.getenv("LOCAL_MODEL_PATH", "/models")
-
-        if not os.path.exists(model_dir):
-            os.makedirs(model_dir)
-
-        save_path = os.path.join(model_dir, filename)
-        try:
-            file.save(save_path)
-            app.logger.info(f"Модель '{filename}' успешно загружена в {save_path}")
-            return jsonify(
-                {"status": "ok", "message": f"Файл '{filename}' успешно загружен."}
-            )
-        except Exception as e:
-            app.logger.error(f"Ошибка при сохранении файла: {e}")
-            return jsonify({"error": f"Не удалось сохранить файл: {str(e)}"}), 500
-    else:
-        return jsonify({"error": "Неверный тип файла. Разрешены только .gguf"}), 400

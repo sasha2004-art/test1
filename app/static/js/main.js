@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
             chatDiv.appendChild(chatTitle);
 
             const editBtn = document.createElement('button');
-            editBtn.innerHTML = '&#9998;'; // Edit icon
+            editBtn.innerHTML = '✎'; // Edit icon
             editBtn.classList.add('edit-btn');
             editBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             const deleteBtn = document.createElement('button');
-            deleteBtn.innerHTML = '&#128465;'; // Trash icon
+            deleteBtn.innerHTML = ''; // Trash icon
             deleteBtn.classList.add('delete-btn');
             deleteBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -244,20 +244,23 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initial state
     toggleResultView(true);
 
-    downloadResultBtn.addEventListener('click', () => {
+    downloadResultBtn.addEventListener('click', async () => {
         const resultJson = resultBox.textContent;
         try {
-            JSON.parse(resultJson); // Check if it's a valid JSON
-            const blob = new Blob([resultJson], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `quest_result_${Date.now()}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            // Проверяем, что в блоке валидный JSON
+            JSON.parse(resultJson);
+    
+            if (window.pywebview && window.pywebview.api) {
+                // Вызываем нативный диалог сохранения через Python
+                await window.pywebview.api.save_quest_to_file(resultJson);
+            } else {
+                // Если API не доступно (например, при отладке в обычном браузере),
+                // выводим сообщение об ошибке, так как это ключевая функция десктопного приложения.
+                alert("Функция сохранения доступна только в десктопном приложении.");
+                console.error("PyWebView API not found. Cannot trigger download.");
+            }
         } catch (e) {
+            // Это сработает, если в resultBox невалидный JSON (например, текст ошибки или "Генерация...")
             alert('Невозможно скачать, так как результат не является валидным JSON.');
         }
     });

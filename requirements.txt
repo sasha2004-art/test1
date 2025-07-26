@@ -1,7 +1,6 @@
 Flask>=2.0
 groq>=0.4.0
 python-dotenv>=1.0.0
-gunicorn
 flake8
 pytest
 black
@@ -12,4 +11,4 @@ pip-audit
 pytest-cov
 openai
 google-generativeai
-llama-cpp-python
+pywebview

@@ -31,7 +31,6 @@
             border-top: 1px solid var(--bg-task-card-footer);
             display: none;
         }
-        /* Стили для кастомной кнопки загрузки */
         .upload-area { display: flex; align-items: center; gap: 15px; }
         #custom-upload-btn {
             width: 50px;
@@ -49,10 +48,11 @@
             flex-grow: 1;
             font-size: 14px;
             color: var(--text-muted);
+            min-height: 30px;
         }
         .action-buttons { margin-top: 15px; display: none; gap: 15px; }
         .action-buttons button { width: auto; flex-grow: 1; }
-        .command-box {
+        #operation-status {
             background-color: var(--bg-sidebar);
             border: 1px solid var(--bg-task-card-footer);
             padding: 15px;
@@ -79,46 +79,69 @@
                 <button class="icon-btn toggle-btn"></button>
             </div>
             <div class="collapsible-content" id="api-keys-content">
-                <!-- API Keys section remains unchanged -->
-                <div class="form-group"><label for="groq-api-key-input">Groq API Ключ:</label><div class="key-group"><input type="password" id="groq-api-key-input" placeholder="gsk_..."><button class="check-key-btn" data-provider="groq">Проверить</button></div><span class="status-message" id="groq-status"></span></div>
-                <div class="form-group"><label for="openai-api-key-input">OpenAI API Ключ:</label><div class="key-group"><input type="password" id="openai-api-key-input" placeholder="sk_..."><button class="check-key-btn" data-provider="openai">Проверить</button></div><span class="status-message" id="openai-status"></span></div>
-                <div class="form-group"><label for="gemini-api-key-input">Google Gemini API Ключ:</label><div class="key-group"><input type="password" id="gemini-api-key-input" placeholder="AIzaSy..."><button class="check-key-btn" data-provider="gemini">Проверить</button></div><span class="status-message" id="gemini-status"></span></div>
+                <div class="form-group">
+                    <label for="groq-api-key-input">Groq API Ключ:</label>
+                    <div class="key-group">
+                        <input type="password" id="groq-api-key-input" placeholder="gsk_...">
+                        <button class="check-key-btn" data-provider="groq">Проверить</button>
+                    </div>
+                    <span class="status-message" id="groq-status"></span>
+                </div>
+                <div class="form-group">
+                    <label for="openai-api-key-input">OpenAI API Ключ:</label>
+                    <div class="key-group">
+                        <input type="password" id="openai-api-key-input" placeholder="sk_...">
+                        <button class="check-key-btn" data-provider="openai">Проверить</button>
+                    </div>
+                    <span class="status-message" id="openai-status"></span>
+                </div>
+                <div class="form-group">
+                    <label for="gemini-api-key-input">Google Gemini API Ключ:</label>
+                    <div class="key-group">
+                        <input type="password" id="gemini-api-key-input" placeholder="AIzaSy...">
+                        <button class="check-key-btn" data-provider="gemini">Проверить</button>
+                    </div>
+                    <span class="status-message" id="gemini-status"></span>
+                </div>
                 <button id="save-keys-btn">Сохранить Ключи</button>
             </div>
         </div>
-
+        
+        {% if use_local_llm %}
         <div class="collapsible-container">
             <div class="collapsible-header" data-target="local-llm-content">
-                <div class="result-box-title">Помощник по управлению локальными моделями</div>
+                <div class="result-box-title">Управление локальными моделями</div>
                 <button class="icon-btn toggle-btn"></button>
             </div>
             <div class="collapsible-content" id="local-llm-content">
-                <p>Добавьте файлы моделей <code>.gguf</code> в проект.</p>
+                <p>Добавьте файлы моделей <code>.gguf</code> в проект, выбрав их на своем компьютере.</p>
                 <div class="upload-area">
-                    <input type="file" id="local-model-selector" accept=".gguf" multiple style="display: none;">
                     <button id="custom-upload-btn" title="Выбрать файлы моделей">+</button>
                     <div id="file-list-display">Файлы не выбраны</div>
                 </div>
                 <div class="action-buttons" id="model-action-buttons">
-                    <button id="generate-copy-btn">Копировать</button>
-                    <button id="generate-move-btn">Вырезать</button>
+                    <button id="copy-btn">Копировать в проект</button>
+                    <button id="move-btn">Переместить в проект</button>
                 </div>
-                <div id="final-command-box" class="command-box">
-                    <p>Скопируйте и выполните команду в терминале в корне проекта:</p>
-                    <hr>
-                    <code id="final-command"></code>
-                </div>
+                <div id="operation-status"></div>
             </div>
         </div>
+        {% endif %}
         
         <div class="settings-container">
-            <!-- Theme selector remains unchanged -->
-            <div class="theme-selector"><label for="theme-select">Тема:</label><select id="theme-select"><option value="system">Как в системе</option><option value="light">Светлая</option><option value="dark">Темная</option></select></div>
+            <div class="theme-selector">
+                <label for="theme-select">Тема:</label>
+                <select id="theme-select">
+                    <option value="system">Как в системе</option>
+                    <option value="light">Светлая</option>
+                    <option value="dark">Темная</option>
+                </select>
+            </div>
         </div>
     </div>
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // --- Логика для сворачиваемых блоков (без изменений) ---
+        // --- Логика для сворачиваемых блоков ---
         const upArrow = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>`;
         const downArrow = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>`;
         document.querySelectorAll('.collapsible-header').forEach(header => {
@@ -138,7 +161,7 @@
             firstContainer.parentElement.querySelector('.toggle-btn').innerHTML = upArrow;
         }
 
-        // --- Логика темы (без изменений) ---
+        // --- Логика темы ---
         const themeSelect = document.getElementById('theme-select');
         function applyTheme(theme) {
             if (theme === 'system') {
@@ -149,97 +172,136 @@
             }
             localStorage.setItem('theme', theme);
         }
-        const savedTheme = localStorage.getItem('theme') || 'system';
-        themeSelect.value = savedTheme;
-        applyTheme(savedTheme);
-        themeSelect.addEventListener('change', (e) => applyTheme(e.target.value));
+        if (themeSelect) {
+            const savedTheme = localStorage.getItem('theme') || 'system';
+            themeSelect.value = savedTheme;
+            applyTheme(savedTheme);
+
+            themeSelect.addEventListener('change', (e) => {
+                applyTheme(e.target.value);
+            });
+        } else {
+            const savedTheme = localStorage.getItem('theme') || 'system';
+            applyTheme(savedTheme);
+        }
         
-        // --- Логика API ключей (без изменений) ---
+        // --- Логика API ключей ---
         async function checkKey(provider) {
             const input = document.getElementById(`${provider}-api-key-input`);
             const statusEl = document.getElementById(`${provider}-status`);
+            if (!input || !statusEl) return;
             const apiKey = input.value.trim();
+
             statusEl.textContent = 'Проверка...';
             statusEl.className = 'status-message';
+
             if (!apiKey) {
                 statusEl.textContent = 'Ключ не введен.';
                 statusEl.classList.add('status-error');
                 return;
             }
+
             try {
-                const response = await fetch('/validate_api_key', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ api_provider: provider, api_key: apiKey }) });
+                const response = await fetch('/validate_api_key', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ api_provider: provider, api_key: apiKey }),
+                });
                 const data = await response.json();
-                if (data.status === 'ok') { statusEl.textContent = 'Ключ действителен!'; statusEl.classList.add('status-ok'); } else { statusEl.textContent = `Ошибка: ${data.message || 'Неизвестная ошибка'}`; statusEl.classList.add('status-error'); }
-            } catch (error) { statusEl.textContent = 'Сетевая ошибка.'; statusEl.classList.add('status-error'); }
+
+                if (data.status === 'ok') {
+                    statusEl.textContent = 'Ключ действителен!';
+                    statusEl.classList.add('status-ok');
+                } else {
+                    statusEl.textContent = `Ошибка: ${data.message || 'Неизвестная ошибка'}`;
+                    statusEl.classList.add('status-error');
+                }
+            } catch (error) {
+                statusEl.textContent = 'Сетевая ошибка.';
+                statusEl.classList.add('status-error');
+            }
         }
         document.getElementById('save-keys-btn').addEventListener('click', () => {
             const groqApiKey = document.getElementById('groq-api-key-input').value;
             const openaiApiKey = document.getElementById('openai-api-key-input').value;
             const geminiApiKey = document.getElementById('gemini-api-key-input').value;
+
             if (groqApiKey) localStorage.setItem('groq_api_key', groqApiKey);
             if (openaiApiKey) localStorage.setItem('openai_api_key', openaiApiKey);
             if (geminiApiKey) localStorage.setItem('gemini_api_key', geminiApiKey);
+
             alert('Ключи сохранены в локальном хранилище!');
         });
         document.getElementById('groq-api-key-input').value = localStorage.getItem('groq_api_key') || '';
         document.getElementById('openai-api-key-input').value = localStorage.getItem('openai_api_key') || '';
         document.getElementById('gemini-api-key-input').value = localStorage.getItem('gemini_api_key') || '';
-        document.querySelectorAll('.check-key-btn').forEach(button => { button.addEventListener('click', () => checkKey(button.dataset.provider)); });
+        document.querySelectorAll('.check-key-btn').forEach(button => {
+            button.addEventListener('click', () => checkKey(button.dataset.provider));
+        });
 
-        // --- НОВАЯ Логика помощника по управлению моделями ---
-        const realUploader = document.getElementById('local-model-selector');
+        {% if use_local_llm %}
+        // --- Логика управления моделями через PyWebView ---
         const customBtn = document.getElementById('custom-upload-btn');
         const fileListDisplay = document.getElementById('file-list-display');
         const actionButtonsContainer = document.getElementById('model-action-buttons');
-        const copyBtn = document.getElementById('generate-copy-btn');
-        const moveBtn = document.getElementById('generate-move-btn');
-        const commandBox = document.getElementById('final-command-box');
-        const finalCommandEl = document.getElementById('final-command');
+        const copyBtn = document.getElementById('copy-btn');
+        const moveBtn = document.getElementById('move-btn');
+        const operationStatus = document.getElementById('operation-status');
 
-        let selectedFiles = null;
+        let selectedFilePaths = [];
 
-        // 1. Кастомная кнопка "плюс" триггерит скрытый input
-        customBtn.addEventListener('click', () => {
-            realUploader.click();
-        });
+        customBtn.addEventListener('click', async () => {
+            try {
+                const result = await window.pywebview.api.open_file_dialog();
+                selectedFilePaths = result || [];
+                
+                operationStatus.style.display = 'none';
 
-        // 2. Когда файлы выбраны в скрытом input
-        realUploader.addEventListener('change', (event) => {
-            selectedFiles = event.target.files;
-            commandBox.style.display = 'none'; // Скрываем старую команду при новом выборе
-
-            if (selectedFiles.length > 0) {
-                // Собираем имена файлов для отображения
-                const fileNames = Array.from(selectedFiles).map(file => file.name).join(', ');
-                fileListDisplay.textContent = `Выбрано: ${fileNames}`;
-                // Показываем кнопки действий
-                actionButtonsContainer.style.display = 'flex';
-            } else {
-                fileListDisplay.textContent = 'Файлы не выбраны';
-                actionButtonsContainer.style.display = 'none';
+                if (selectedFilePaths.length > 0) {
+                    const fileNames = selectedFilePaths.map(path => path.split(/[\\/]/).pop());
+                    fileListDisplay.textContent = `Выбрано: ${fileNames.join(', ')}`;
+                    actionButtonsContainer.style.display = 'flex';
+                } else {
+                    fileListDisplay.textContent = 'Файлы не выбраны';
+                    actionButtonsContainer.style.display = 'none';
+                }
+            } catch (e) {
+                console.error("Ошибка при вызове диалога выбора файла:", e);
+                fileListDisplay.textContent = "Ошибка при открытии диалога.";
             }
         });
 
-        // 3. Функция для генерации команды
-        function generateCommand(action) {
-            if (!selectedFiles || selectedFiles.length === 0) return;
+        async function handleFileAction(action) {
+            if (selectedFilePaths.length === 0) return;
 
-            // Формируем список путей с плейсхолдерами
-            const filePaths = Array.from(selectedFiles)
-                .map(file => `"ПОЛНЫЙ_ПУТЬ_К/${file.name}"`)
-                .join(' ');
-            
-            // Собираем финальную команду
-            const command = `python scripts/manage_model.py ${filePaths} --action ${action}`;
-            
-            // Показываем результат
-            finalCommandEl.textContent = command;
-            commandBox.style.display = 'block';
+            copyBtn.disabled = true;
+            moveBtn.disabled = true;
+            operationStatus.textContent = "Выполняется операция...";
+            operationStatus.className = "status-message";
+            operationStatus.style.display = 'block';
+
+            try {
+                const result = await window.pywebview.api.manage_files(action, selectedFilePaths);
+                
+                operationStatus.textContent = result.message;
+                operationStatus.classList.add(result.status === 'ok' ? 'status-ok' : 'status-error');
+
+            } catch (e) {
+                console.error("Ошибка при выполнении файловой операции:", e);
+                operationStatus.textContent = "Критическая ошибка. См. консоль.";
+                operationStatus.classList.add('status-error');
+            } finally {
+                copyBtn.disabled = false;
+                moveBtn.disabled = false;
+                selectedFilePaths = [];
+                fileListDisplay.textContent = 'Файлы не выбраны';
+                actionButtonsContainer.style.display = 'none';
+            }
         }
 
-        // 4. Назначаем обработчики на кнопки "Копировать" и "Вырезать"
-        copyBtn.addEventListener('click', () => generateCommand('copy'));
-        moveBtn.addEventListener('click', () => generateCommand('move'));
+        copyBtn.addEventListener('click', () => handleFileAction('copy'));
+        moveBtn.addEventListener('click', () => handleFileAction('move'));
+        {% endif %}
     });
     </script>
 </body>

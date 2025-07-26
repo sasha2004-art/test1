@@ -7,7 +7,7 @@ from typing import Any, Dict
 import google.generativeai as genai
 import openai
 from groq import Groq
-from llama_cpp import Llama
+# Убираем 'from llama_cpp import Llama' отсюда
 
 logger = logging.getLogger(__name__)
 
@@ -88,6 +88,14 @@ def create_quest_from_setting(
             response_content = response.text
 
         elif api_provider == "local":
+            # --- КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Отложенный импорт ---
+            try:
+                from llama_cpp import Llama
+            except ImportError:
+                logger.error("Модуль llama_cpp не установлен. Пожалуйста, перезапустите установку с опцией 'y'.")
+                return {"error": "Поддержка локальных LLM не установлена."}
+            # ----------------------------------------------
+
             model_dir = os.getenv("LOCAL_MODEL_PATH", "quest-generator/models")
             model_path = os.path.join(model_dir, model)
 
@@ -101,13 +109,13 @@ def create_quest_from_setting(
                 n_ctx=4096,
                 n_gpu_layers=-1,
                 verbose=False,
-                chat_format="llama-2",  # Используем стандартный формат чата
+                chat_format="llama-2",
             )
             chat_completion = llm.create_chat_completion(
                 messages=[{"role": "user", "content": master_prompt}],
                 temperature=0.7,
                 response_format={"type": "json_object"},
-                stream=False,  # Явно указываем для корректной работы pyright
+                stream=False,
             )
             response_content = chat_completion["choices"][0]["message"]["content"]
 
