@@ -7,6 +7,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const modelSelector = document.getElementById('model-selector');
     const newChatBtn = document.getElementById('new-chat-btn');
     const chatList = document.getElementById('chat-list');
+    const settingsBtn = document.getElementById('settings-btn');
+    const toggleResultBtn = document.getElementById('toggle-result-btn');
+    const downloadResultBtn = document.getElementById('download-result-btn');
 
     let chats = {};
     let activeChatId = null;
@@ -133,6 +136,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     newChatBtn.addEventListener('click', createNewChat);
 
+    settingsBtn.addEventListener('click', () => {
+        window.location.href = '/api_keys';
+    });
+
     async function updateModels() {
         const selectedProvider = document.querySelector('input[name="api_provider"]:checked').value;
         const apiKey = localStorage.getItem(`${selectedProvider}_api_key`);
@@ -192,6 +199,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     providerRadios.forEach(radio => {
         radio.addEventListener('change', updateModels);
+    });
+
+    toggleResultBtn.addEventListener('click', () => {
+        const isVisible = resultBox.style.display !== 'none';
+        resultBox.style.display = isVisible ? 'none' : 'block';
+        toggleResultBtn.textContent = isVisible ? 'Развернуть' : 'Свернуть';
+    });
+
+    downloadResultBtn.addEventListener('click', () => {
+        const resultJson = resultBox.textContent;
+        try {
+            JSON.parse(resultJson); // Check if it's a valid JSON
+            const blob = new Blob([resultJson], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `quest_result_${Date.now()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } catch (e) {
+            alert('Невозможно скачать, так как результат не является валидным JSON.');
+        }
     });
 
     generateBtn.addEventListener('click', async () => {
