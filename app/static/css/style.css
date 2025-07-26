@@ -352,6 +352,9 @@ pre {
     align-items: center;
     justify-content: center;
     transition: background-color 0.2s, color 0.2s;
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
 }
 
 .settings-btn:hover {

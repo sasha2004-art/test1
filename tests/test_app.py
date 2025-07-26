@@ -19,12 +19,11 @@ def test_index_route(client):
     assert b"QuestGenerator AI" in response.data
 
 
-def test_api_keys_route(client):
-    """Тестирует, что страница с ключами API загружается успешно."""
-    response = client.get("/api_keys")
+def test_settings_route(client):
+    """Тестирует, что страница настроек загружается успешно."""
+    response = client.get("/settings")
     assert response.status_code == 200
-    # ИСПРАВЛЕНО: Строка с кириллицей кодируется в байты перед проверкой
-    assert "Настройка API Ключей".encode("utf-8") in response.data
+    assert "Настройка".encode("utf-8") in response.data
 
 
 def test_generate_quest_endpoint_success(client, monkeypatch):
