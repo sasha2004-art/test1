@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>API Ключи</title>
+    <title>Настройки</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
         .key-group { display: flex; align-items: center; gap: 10px; }
@@ -12,63 +12,134 @@
         .status-message { font-size: 14px; height: 20px; }
         .status-ok { color: #28a745; }
         .status-error { color: #dc3545; }
+        .collapsible-container {
+            margin-bottom: 20px;
+            border: 1px solid var(--bg-task-card-footer);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .collapsible-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--bg-sidebar);
+            padding: 8px 15px;
+            cursor: pointer;
+        }
+        .collapsible-content {
+            padding: 20px;
+            border-top: 1px solid var(--bg-task-card-footer);
+            display: none;
+        }
+        /* Стили для кастомной кнопки загрузки */
+        .upload-area { display: flex; align-items: center; gap: 15px; }
+        #custom-upload-btn {
+            width: 50px;
+            height: 50px;
+            font-size: 28px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            padding: 0;
+            line-height: 50px;
+        }
+        #file-list-display {
+            background-color: var(--bg-sidebar);
+            border-radius: 4px;
+            padding: 10px 15px;
+            flex-grow: 1;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+        .action-buttons { margin-top: 15px; display: none; gap: 15px; }
+        .action-buttons button { width: auto; flex-grow: 1; }
+        .command-box {
+            background-color: var(--bg-sidebar);
+            border: 1px solid var(--bg-task-card-footer);
+            padding: 15px;
+            border-radius: 4px;
+            font-family: var(--font-mono);
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin-top: 15px;
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <a href="/" class="home-link" title="Назад к генератору">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="28" height="28">
-                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8h5z"/>
-            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8h5z"/></svg>
         </a>
         <h1>Настройка</h1>
-        <p>Введите ваши API-ключи, сохраните и проверьте их валидность.</p>
+        <p>Управляйте своими API-ключами и локальными моделями.</p>
 
-        <div class="form-group">
-            <label for="groq-api-key-input">Groq API Ключ:</label>
-            <div class="key-group">
-                <input type="password" id="groq-api-key-input" placeholder="gsk_...">
-                <button id="check-groq-btn" data-provider="groq">Проверить</button>
+        <div class="collapsible-container">
+            <div class="collapsible-header" data-target="api-keys-content">
+                <div class="result-box-title">API Ключи</div>
+                <button class="icon-btn toggle-btn"></button>
             </div>
-            <span class="status-message" id="groq-status"></span>
+            <div class="collapsible-content" id="api-keys-content">
+                <!-- API Keys section remains unchanged -->
+                <div class="form-group"><label for="groq-api-key-input">Groq API Ключ:</label><div class="key-group"><input type="password" id="groq-api-key-input" placeholder="gsk_..."><button class="check-key-btn" data-provider="groq">Проверить</button></div><span class="status-message" id="groq-status"></span></div>
+                <div class="form-group"><label for="openai-api-key-input">OpenAI API Ключ:</label><div class="key-group"><input type="password" id="openai-api-key-input" placeholder="sk_..."><button class="check-key-btn" data-provider="openai">Проверить</button></div><span class="status-message" id="openai-status"></span></div>
+                <div class="form-group"><label for="gemini-api-key-input">Google Gemini API Ключ:</label><div class="key-group"><input type="password" id="gemini-api-key-input" placeholder="AIzaSy..."><button class="check-key-btn" data-provider="gemini">Проверить</button></div><span class="status-message" id="gemini-status"></span></div>
+                <button id="save-keys-btn">Сохранить Ключи</button>
+            </div>
         </div>
 
-        <div class="form-group">
-            <label for="openai-api-key-input">OpenAI API Ключ:</label>
-            <div class="key-group">
-                <input type="password" id="openai-api-key-input" placeholder="sk_...">
-                <button id="check-openai-btn" data-provider="openai">Проверить</button>
+        <div class="collapsible-container">
+            <div class="collapsible-header" data-target="local-llm-content">
+                <div class="result-box-title">Помощник по управлению локальными моделями</div>
+                <button class="icon-btn toggle-btn"></button>
             </div>
-            <span class="status-message" id="openai-status"></span>
-        </div>
-
-        <div class="form-group">
-            <label for="gemini-api-key-input">Google Gemini API Ключ:</label>
-            <div class="key-group">
-                <input type="password" id="gemini-api-key-input" placeholder="AIzaSy...">
-                <button id="check-gemini-btn" data-provider="gemini">Проверить</button>
+            <div class="collapsible-content" id="local-llm-content">
+                <p>Добавьте файлы моделей <code>.gguf</code> в проект.</p>
+                <div class="upload-area">
+                    <input type="file" id="local-model-selector" accept=".gguf" multiple style="display: none;">
+                    <button id="custom-upload-btn" title="Выбрать файлы моделей">+</button>
+                    <div id="file-list-display">Файлы не выбраны</div>
+                </div>
+                <div class="action-buttons" id="model-action-buttons">
+                    <button id="generate-copy-btn">Копировать</button>
+                    <button id="generate-move-btn">Вырезать</button>
+                </div>
+                <div id="final-command-box" class="command-box">
+                    <p>Скопируйте и выполните команду в терминале в корне проекта:</p>
+                    <hr>
+                    <code id="final-command"></code>
+                </div>
             </div>
-            <span class="status-message" id="gemini-status"></span>
         </div>
-
-        <button id="save-keys-btn">Сохранить Ключи</button>
         
         <div class="settings-container">
-            <div class="theme-selector">
-                <label for="theme-select">Тема:</label>
-                <select id="theme-select">
-                    <option value="system">Как в системе</option>
-                    <option value="light">Светлая</option>
-                    <option value="dark">Темная</option>
-                </select>
-            </div>
+            <!-- Theme selector remains unchanged -->
+            <div class="theme-selector"><label for="theme-select">Тема:</label><select id="theme-select"><option value="system">Как в системе</option><option value="light">Светлая</option><option value="dark">Темная</option></select></div>
         </div>
     </div>
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // --- Theme Switcher Logic ---
-        const themeSelect = document.getElementById('theme-select');
+        // --- Логика для сворачиваемых блоков (без изменений) ---
+        const upArrow = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>`;
+        const downArrow = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>`;
+        document.querySelectorAll('.collapsible-header').forEach(header => {
+            const content = document.getElementById(header.dataset.target);
+            const toggleBtn = header.querySelector('.toggle-btn');
+            const isVisible = content.style.display === 'block';
+            toggleBtn.innerHTML = isVisible ? upArrow : downArrow;
+            header.addEventListener('click', () => {
+                const isVisible = content.style.display === 'block';
+                content.style.display = isVisible ? 'none' : 'block';
+                toggleBtn.innerHTML = isVisible ? downArrow : upArrow;
+            });
+        });
+        const firstContainer = document.querySelector('.collapsible-content');
+        if (firstContainer) {
+            firstContainer.style.display = 'block';
+            firstContainer.parentElement.querySelector('.toggle-btn').innerHTML = upArrow;
+        }
 
+        // --- Логика темы (без изменений) ---
+        const themeSelect = document.getElementById('theme-select');
         function applyTheme(theme) {
             if (theme === 'system') {
                 const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
@@ -78,74 +149,97 @@
             }
             localStorage.setItem('theme', theme);
         }
-
-        if (themeSelect) {
-            const savedTheme = localStorage.getItem('theme') || 'system';
-            themeSelect.value = savedTheme;
-            applyTheme(savedTheme);
-
-            themeSelect.addEventListener('change', (e) => {
-                applyTheme(e.target.value);
-            });
-        } else {
-            const savedTheme = localStorage.getItem('theme') || 'system';
-            applyTheme(savedTheme);
-        }
-
+        const savedTheme = localStorage.getItem('theme') || 'system';
+        themeSelect.value = savedTheme;
+        applyTheme(savedTheme);
+        themeSelect.addEventListener('change', (e) => applyTheme(e.target.value));
+        
+        // --- Логика API ключей (без изменений) ---
         async function checkKey(provider) {
             const input = document.getElementById(`${provider}-api-key-input`);
             const statusEl = document.getElementById(`${provider}-status`);
             const apiKey = input.value.trim();
-
             statusEl.textContent = 'Проверка...';
             statusEl.className = 'status-message';
-
             if (!apiKey) {
                 statusEl.textContent = 'Ключ не введен.';
                 statusEl.classList.add('status-error');
                 return;
             }
-
             try {
-                const response = await fetch('/validate_api_key', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ api_provider: provider, api_key: apiKey }),
-                });
+                const response = await fetch('/validate_api_key', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ api_provider: provider, api_key: apiKey }) });
                 const data = await response.json();
-
-                if (data.status === 'ok') {
-                    statusEl.textContent = 'Ключ действителен!';
-                    statusEl.classList.add('status-ok');
-                } else {
-                    statusEl.textContent = `Ошибка: ${data.message || 'Неизвестная ошибка'}`;
-                    statusEl.classList.add('status-error');
-                }
-            } catch (error) {
-                statusEl.textContent = 'Сетевая ошибка.';
-                statusEl.classList.add('status-error');
-            }
+                if (data.status === 'ok') { statusEl.textContent = 'Ключ действителен!'; statusEl.classList.add('status-ok'); } else { statusEl.textContent = `Ошибка: ${data.message || 'Неизвестная ошибка'}`; statusEl.classList.add('status-error'); }
+            } catch (error) { statusEl.textContent = 'Сетевая ошибка.'; statusEl.classList.add('status-error'); }
         }
-
         document.getElementById('save-keys-btn').addEventListener('click', () => {
             const groqApiKey = document.getElementById('groq-api-key-input').value;
             const openaiApiKey = document.getElementById('openai-api-key-input').value;
             const geminiApiKey = document.getElementById('gemini-api-key-input').value;
-
             if (groqApiKey) localStorage.setItem('groq_api_key', groqApiKey);
             if (openaiApiKey) localStorage.setItem('openai_api_key', openaiApiKey);
             if (geminiApiKey) localStorage.setItem('gemini_api_key', geminiApiKey);
-
             alert('Ключи сохранены в локальном хранилище!');
         });
-
         document.getElementById('groq-api-key-input').value = localStorage.getItem('groq_api_key') || '';
         document.getElementById('openai-api-key-input').value = localStorage.getItem('openai_api_key') || '';
         document.getElementById('gemini-api-key-input').value = localStorage.getItem('gemini_api_key') || '';
+        document.querySelectorAll('.check-key-btn').forEach(button => { button.addEventListener('click', () => checkKey(button.dataset.provider)); });
 
-        document.getElementById('check-groq-btn').addEventListener('click', () => checkKey('groq'));
-        document.getElementById('check-openai-btn').addEventListener('click', () => checkKey('openai'));
-        document.getElementById('check-gemini-btn').addEventListener('click', () => checkKey('gemini'));
+        // --- НОВАЯ Логика помощника по управлению моделями ---
+        const realUploader = document.getElementById('local-model-selector');
+        const customBtn = document.getElementById('custom-upload-btn');
+        const fileListDisplay = document.getElementById('file-list-display');
+        const actionButtonsContainer = document.getElementById('model-action-buttons');
+        const copyBtn = document.getElementById('generate-copy-btn');
+        const moveBtn = document.getElementById('generate-move-btn');
+        const commandBox = document.getElementById('final-command-box');
+        const finalCommandEl = document.getElementById('final-command');
+
+        let selectedFiles = null;
+
+        // 1. Кастомная кнопка "плюс" триггерит скрытый input
+        customBtn.addEventListener('click', () => {
+            realUploader.click();
+        });
+
+        // 2. Когда файлы выбраны в скрытом input
+        realUploader.addEventListener('change', (event) => {
+            selectedFiles = event.target.files;
+            commandBox.style.display = 'none'; // Скрываем старую команду при новом выборе
+
+            if (selectedFiles.length > 0) {
+                // Собираем имена файлов для отображения
+                const fileNames = Array.from(selectedFiles).map(file => file.name).join(', ');
+                fileListDisplay.textContent = `Выбрано: ${fileNames}`;
+                // Показываем кнопки действий
+                actionButtonsContainer.style.display = 'flex';
+            } else {
+                fileListDisplay.textContent = 'Файлы не выбраны';
+                actionButtonsContainer.style.display = 'none';
+            }
+        });
+
+        // 3. Функция для генерации команды
+        function generateCommand(action) {
+            if (!selectedFiles || selectedFiles.length === 0) return;
+
+            // Формируем список путей с плейсхолдерами
+            const filePaths = Array.from(selectedFiles)
+                .map(file => `"ПОЛНЫЙ_ПУТЬ_К/${file.name}"`)
+                .join(' ');
+            
+            // Собираем финальную команду
+            const command = `python scripts/manage_model.py ${filePaths} --action ${action}`;
+            
+            // Показываем результат
+            finalCommandEl.textContent = command;
+            commandBox.style.display = 'block';
+        }
+
+        // 4. Назначаем обработчики на кнопки "Копировать" и "Вырезать"
+        copyBtn.addEventListener('click', () => generateCommand('copy'));
+        moveBtn.addEventListener('click', () => generateCommand('move'));
     });
     </script>
 </body>

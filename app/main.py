@@ -1,6 +1,7 @@
 import os
 import logging
 from flask import Flask, request, jsonify, render_template
+from werkzeug.utils import secure_filename
 from services.quest_generator import (
     create_quest_from_setting,
     validate_api_key,
@@ -96,3 +97,37 @@ def available_models_endpoint():
     models = get_available_models(api_provider=api_provider, api_key=api_key)
 
     return jsonify(models)
+
+
+@app.route("/api/upload_model", methods=["POST"])
+def upload_model_endpoint():
+    """Эндпоинт для загрузки .gguf файлов моделей."""
+    if "model_file" not in request.files:
+        return jsonify({"error": "No file part in the request"}), 400
+
+    file = request.files["model_file"]
+
+    if file.filename == "":
+        return jsonify({"error": "No selected file"}), 400
+
+    if file and file.filename and file.filename.endswith(".gguf"):
+        # Используем secure_filename для предотвращения атак
+        filename = secure_filename(file.filename)
+        # Путь внутри контейнера, определенный в docker-compose.yml
+        model_dir = os.getenv("LOCAL_MODEL_PATH", "/models")
+
+        if not os.path.exists(model_dir):
+            os.makedirs(model_dir)
+
+        save_path = os.path.join(model_dir, filename)
+        try:
+            file.save(save_path)
+            app.logger.info(f"Модель '{filename}' успешно загружена в {save_path}")
+            return jsonify(
+                {"status": "ok", "message": f"Файл '{filename}' успешно загружен."}
+            )
+        except Exception as e:
+            app.logger.error(f"Ошибка при сохранении файла: {e}")
+            return jsonify({"error": f"Не удалось сохранить файл: {str(e)}"}), 500
+    else:
+        return jsonify({"error": "Неверный тип файла. Разрешены только .gguf"}), 400

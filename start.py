@@ -1,6 +1,7 @@
 import os
 import sys
 import subprocess
+from pathlib import Path
 
 
 class Colors:
@@ -13,6 +14,25 @@ class Colors:
     ENDC = "\033[0m"
     BOLD = "\033[1m"
     UNDERLINE = "\033[4m"
+
+
+def setup_environment():
+    """Находит и записывает абсолютный путь к папке с моделями в .env файл."""
+    try:
+        project_root = Path(__file__).parent.resolve()
+        models_dir = project_root / "quest-generator" / "models"
+        env_file_path = project_root / "quest-generator" / ".env"
+
+        models_dir.mkdir(parents=True, exist_ok=True)
+
+        env_content = f"LOCAL_MODEL_TARGET_PATH={models_dir.as_posix()}"
+
+        env_file_path.write_text(env_content)
+        print(f"{Colors.OKGREEN}Переменная окружения для моделей настроена в: {env_file_path}{Colors.ENDC}")
+        return True
+    except Exception as e:
+        print(f"{Colors.FAIL}Не удалось настроить .env файл для моделей: {e}{Colors.ENDC}")
+        return False
 
 
 def check_docker_installed():
@@ -61,6 +81,9 @@ def main():
     print(f"{Colors.HEADER}  Универсальный Запускатор Проекта  {Colors.ENDC}")
     print(f"{Colors.HEADER}====================================={Colors.ENDC}\n")
 
+    if not setup_environment():
+        sys.exit(1)
+
     if not check_docker_installed():
         sys.exit(1)
 
@@ -91,4 +114,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

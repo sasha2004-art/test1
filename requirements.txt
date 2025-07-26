@@ -12,3 +12,4 @@ pip-audit
 pytest-cov
 openai
 google-generativeai
+llama-cpp-python

@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, mock_open
 import json
 import re
 
@@ -340,3 +340,57 @@ def test_create_quest_api_quota_exceeded_error(mock_openai):
         "Превышен лимит использования API или недостаточно средств. Пожалуйста, проверьте ваш тарифный план или баланс."
         in result["error"]
     )
+
+
+# --- НОВЫЕ ТЕСТЫ ДЛЯ ЛОКАЛЬНОГО ПРОВАЙДЕРА ---
+
+
+@patch("services.quest_generator.os.path.isdir")
+@patch("services.quest_generator.os.listdir")
+def test_get_available_models_local_success(mock_listdir, mock_isdir):
+    """Тестирует успешное получение списка локальных GGUF моделей."""
+    mock_isdir.return_value = True
+    mock_listdir.return_value = ["model1.gguf", "model2.gguf", "readme.txt"]
+    with patch("services.quest_generator.os.path.isfile", return_value=True):
+        result = get_available_models("local", "")
+        assert result == {"models": ["model1.gguf", "model2.gguf"]}
+
+
+@patch("services.quest_generator.os.path.isdir")
+def test_get_available_models_local_dir_not_found(mock_isdir):
+    """Тестирует случай, когда директория с локальными моделями не найдена."""
+    mock_isdir.return_value = False
+    result = get_available_models("local", "")
+    assert result == {"models": []}
+
+
+def test_validate_api_key_local():
+    """Тестирует валидацию для локального провайдера (всегда успешно)."""
+    assert validate_api_key("local", "any_key_or_empty") == {"status": "ok"}
+
+
+@patch("services.quest_generator.Llama")
+@patch("services.quest_generator.os.path.exists")
+def test_create_quest_local_success(mock_exists, mock_llama):
+    """Тестирует успешную генерацию квеста через локальную модель."""
+    mock_exists.return_value = True
+    mock_llama_instance = MagicMock()
+    mock_llama_instance.create_chat_completion.return_value = {
+        "choices": [{"message": {"content": '{"questTitle": "Локальный Квест"}'}}]
+    }
+    mock_llama.return_value = mock_llama_instance
+
+    result = create_quest_from_setting("любой сеттинг", "", "local", "model1.gguf")
+
+    assert result == {"questTitle": "Локальный Квест"}
+    mock_llama.assert_called_once()
+    mock_llama_instance.create_chat_completion.assert_called_once()
+
+
+@patch("services.quest_generator.os.path.exists")
+def test_create_quest_local_model_not_found(mock_exists):
+    """Тестирует ошибку, если файл локальной модели не найден."""
+    mock_exists.return_value = False
+    result = create_quest_from_setting("любой сеттинг", "", "local", "nonexistent.gguf")
+    assert "error" in result
+    assert "Локальная модель не найдена" in result["error"]

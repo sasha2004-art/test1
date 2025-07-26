@@ -1,11 +1,13 @@
 import json
 import logging
+import os
 import re
 from typing import Any, Dict
 
 import google.generativeai as genai
 import openai
 from groq import Groq
+from llama_cpp import Llama
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +86,30 @@ def create_quest_from_setting(
             gemini_model = genai.GenerativeModel(model)  # type: ignore
             response = gemini_model.generate_content(master_prompt)
             response_content = response.text
+
+        elif api_provider == "local":
+            model_dir = os.getenv("LOCAL_MODEL_PATH", "quest-generator/models")
+            model_path = os.path.join(model_dir, model)
+
+            if not os.path.exists(model_path):
+                error_msg = f"Локальная модель не найдена по пути: {model_path}"
+                logger.error(error_msg)
+                return {"error": error_msg}
+
+            llm = Llama(
+                model_path=model_path,
+                n_ctx=4096,
+                n_gpu_layers=-1,
+                verbose=False,
+                chat_format="llama-2",  # Используем стандартный формат чата
+            )
+            chat_completion = llm.create_chat_completion(
+                messages=[{"role": "user", "content": master_prompt}],
+                temperature=0.7,
+                response_format={"type": "json_object"},
+                stream=False,  # Явно указываем для корректной работы pyright
+            )
+            response_content = chat_completion["choices"][0]["message"]["content"]
 
         else:
             logger.error(f"Unknown API provider: {api_provider}")
@@ -174,6 +200,9 @@ def validate_api_key(api_provider: str, api_key: str) -> Dict[str, Any]:
             if not models:
                 raise ValueError("No generative models found for this API key.")
             return {"status": "ok"}
+        elif api_provider == "local":
+            # Для локальных моделей ключ не нужен, всегда считаем 'ok'
+            return {"status": "ok"}
         else:
             return {"error": f"Unknown API provider: {api_provider}"}
 
@@ -213,6 +242,16 @@ def get_available_models(api_provider: str, api_key: str) -> Dict[str, Any]:
                 if "generateContent" in m.supported_generation_methods
             ]
             models_list = models
+        elif api_provider == "local":
+            model_dir = os.getenv("LOCAL_MODEL_PATH", "quest-generator/models")
+            if not os.path.isdir(model_dir):
+                logger.error(f"Директория локальных моделей не найдена: {model_dir}")
+                return {"models": []}
+            models_list = [
+                f
+                for f in os.listdir(model_dir)
+                if os.path.isfile(os.path.join(model_dir, f)) and f.endswith(".gguf")
+            ]
         else:
             return {"error": f"Unknown API provider: {api_provider}"}
 

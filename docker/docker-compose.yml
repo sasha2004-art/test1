@@ -8,4 +8,6 @@ services:
     volumes:
       - ../app:/app 
       - ../tests:/tests
-    # command: ["sleep", "3600"]
+      - ../quest-generator/models:/models
+    environment:
+      - LOCAL_MODEL_PATH=/models
