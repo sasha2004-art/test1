@@ -10,6 +10,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const settingsBtn = document.getElementById('settings-btn');
     const toggleResultBtn = document.getElementById('toggle-result-btn');
     const downloadResultBtn = document.getElementById('download-result-btn');
+    const themeSelect = document.getElementById('theme-select');
+
+    function applyTheme(theme) {
+        if (theme === 'system') {
+            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', systemTheme);
+        } else {
+            document.documentElement.setAttribute('data-theme', theme);
+        }
+        localStorage.setItem('theme', theme);
+    }
+
+    themeSelect.addEventListener('change', (e) => {
+        applyTheme(e.target.value);
+    });
+
+    const savedTheme = localStorage.getItem('theme') || 'system';
+    themeSelect.value = savedTheme;
+    applyTheme(savedTheme);
 
     let chats = {};
     let activeChatId = null;

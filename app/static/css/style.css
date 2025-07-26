@@ -1,7 +1,44 @@
+:root {
+    --font-primary: 'Google Sans', 'Roboto', sans-serif;
+    --font-mono: 'Google Sans Mono', 'Courier New', monospace;
+
+    --bg-main: #ffffff;
+    --bg-sidebar: #f0f0f0;
+    --bg-sidebar-container: #e8e8e8;
+    --bg-top-nav: #f5f5f5;
+    --bg-task-card-footer: #f0f0f0;
+    --text-primary: #000000;
+    --text-sidebar: #333333;
+    --text-muted: #555555;
+    --text-placeholder: #888888;
+    --accent-primary: #005cbb;
+    --accent-attention: #d93025;
+    --accent-feedback: #f9ab00;
+    --accent-failed: #d93025;
+    --snackbar-button: #1a73e8;
+}
+
+[data-theme="dark"] {
+    --bg-main: #28252b;
+    --bg-sidebar: #141316;
+    --bg-sidebar-container: #18161a;
+    --bg-top-nav: #201d22;
+    --bg-task-card-footer: #2f2c32;
+    --text-primary: #ffffff;
+    --text-sidebar: #e6e1ff;
+    --text-muted: #bfb8dd;
+    --text-placeholder: #7a7384;
+    --accent-primary: #715cd7;
+    --accent-attention: #715cd7;
+    --accent-feedback: #ffb64a;
+    --accent-failed: #ff6767;
+    --snackbar-button: #abc7ff;
+}
+
 body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-color: #121212;
-    color: #e0e0e0;
+    font-family: var(--font-primary);
+    background-color: var(--bg-main);
+    color: var(--text-primary);
     line-height: 1.6;
     margin: 0;
     /* padding: 20px; */
@@ -9,14 +46,14 @@ body {
 .container {
     max-width: 800px;
     margin: 20px auto;
-    background-color: #1e1e1e;
+    background-color: var(--bg-sidebar-container);
     padding: 25px;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
 }
 h1, h2 {
-    color: #ffffff;
-    border-bottom: 2px solid #333;
+    color: var(--text-primary);
+    border-bottom: 2px solid var(--bg-task-card-footer);
     padding-bottom: 10px;
 }
 .form-group {
@@ -26,22 +63,28 @@ label {
     display: block;
     margin-bottom: 8px;
     font-weight: bold;
+    color: var(--text-muted);
 }
 input[type="password"], textarea {
     width: 100%;
     padding: 10px;
-    background-color: #2a2a2a;
-    border: 1px solid #444;
+    background-color: var(--bg-sidebar);
+    border: 1px solid var(--bg-task-card-footer);
     border-radius: 4px;
-    color: #e0e0e0;
+    color: var(--text-primary);
     font-size: 16px;
 }
+
+textarea::placeholder {
+    color: var(--text-placeholder);
+}
+
 button {
     display: block;
     width: 100%;
     padding: 10px;
-    background-color: #007bff;
-    color: white;
+    background-color: var(--accent-primary);
+    color: var(--text-sidebar);
     border: none;
     border-radius: 4px;
     font-size: 16px;
@@ -49,15 +92,15 @@ button {
     transition: background-color 0.2s;
 }
 button:hover {
-    background-color: #0056b3;
+    opacity: 0.8;
 }
 button:disabled {
-    background-color: #555;
+    background-color: var(--text-muted);
     cursor: not-allowed;
 }
 .result-container {
     margin-top: 30px;
-    border: 1px solid #444;
+    border: 1px solid var(--bg-task-card-footer);
     border-radius: 4px;
     overflow: hidden;
 }
@@ -66,14 +109,15 @@ button:disabled {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #2a2a2a;
+    background-color: var(--bg-sidebar);
     padding: 8px 15px;
-    border-bottom: 1px solid #444;
+    border-bottom: 1px solid var(--bg-task-card-footer);
 }
 
 .result-box-title {
     font-weight: bold;
     font-size: 16px;
+    color: var(--text-muted);
 }
 
 .result-box-actions {
@@ -85,7 +129,7 @@ button:disabled {
 .icon-btn {
     background: none;
     border: none;
-    color: #a0a0a0;
+    color: var(--text-placeholder);
     cursor: pointer;
     padding: 5px;
     border-radius: 50%;
@@ -98,18 +142,19 @@ button:disabled {
 }
 
 .icon-btn:hover {
-    background-color: #333;
-    color: #ffffff;
+    background-color: var(--bg-task-card-footer);
+    color: var(--text-primary);
 }
 pre {
-    background-color: #2a2a2a;
+    background-color: var(--bg-sidebar);
     padding: 15px;
     border-radius: 4px;
     white-space: pre-wrap;
     word-wrap: break-word;
-    font-family: "Courier New", Courier, monospace;
+    font-family: var(--font-mono);
     max-height: 500px;
     overflow-y: auto;
+    color: var(--text-primary);
 }
 .form-row {
     display: flex;
@@ -129,20 +174,20 @@ pre {
 #model-selector {
     width: 100%;
     padding: 10px;
-    background-color: #2a2a2a;
-    border: 1px solid #444;
+    background-color: var(--bg-sidebar);
+    border: 1px solid var(--bg-task-card-footer);
     border-radius: 4px;
-    color: #e0e0e0;
+    color: var(--text-primary);
     font-size: 16px;
 }
 
 .provider-selector {
     display: flex;
     gap: 20px;
-    background-color: #2a2a2a;
+    background-color: var(--bg-sidebar);
     padding: 10px 15px;
     border-radius: 4px;
-    border: 1px solid #444;
+    border: 1px solid var(--bg-task-card-footer);
 }
 
 .provider-selector label {
@@ -151,6 +196,7 @@ pre {
     gap: 8px;
     margin-bottom: 0;
     cursor: pointer;
+    color: var(--text-muted);
 }
 
 .api-key-management {
@@ -158,7 +204,7 @@ pre {
 }
 
 .api-key-management a {
-    color: #00aaff;
+    color: var(--snackbar-button);
     text-decoration: none;
 }
 .api-key-management a:hover {
@@ -172,22 +218,23 @@ pre {
     width: 27.5rem;
     max-width: 27.5rem;
     min-width: 5rem;
-    background-color: #1e1e1e;
+    background-color: var(--bg-sidebar-container);
     padding: 20px;
     display: flex;
     flex-direction: column;
-    border-right: 1px solid #333;
+    border-right: 1px solid var(--bg-task-card-footer);
     transition: all 0.3s ease-in-out;
     overflow: hidden;
 }
 
 .sidebar.collapsed {
-    width: 5rem;
+    width: 6rem;
 }
 
 .sidebar.collapsed .logo-container h1,
 .sidebar.collapsed .chat-header h2,
-.sidebar.collapsed #new-chat-btn {
+.sidebar.collapsed #new-chat-btn,
+.sidebar.collapsed .sidebar-footer {
     display: none;
 }
 .logo-container {
@@ -196,11 +243,11 @@ pre {
     align-items: center;
     padding-bottom: 20px;
     margin-bottom: 20px;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid var(--bg-task-card-footer);
 }
 
 .logo-container h1 {
-    color: white;
+    color: var(--text-primary);
     margin: 0 0 0 10px;
     font-size: 24px;
     border: none;
@@ -209,6 +256,7 @@ pre {
 .logo-svg {
     width: 40px;
     height: 40px;
+    fill: var(--accent-primary);
 }
 .sidebar-header {
     display: flex;
@@ -224,8 +272,8 @@ pre {
 }
 
 #new-chat-btn {
-    background-color: #007bff;
-    color: white;
+    background-color: var(--accent-primary);
+    color: var(--text-sidebar);
     border: none;
     border-radius: 50%;
     width: 30px;
@@ -256,10 +304,11 @@ pre {
     text-overflow: ellipsis;
     flex-grow: 1;
     padding-right: 10px;
+    color: var(--text-sidebar);
 }
 
 .chat-item:hover, .chat-item.active {
-    background-color: #2a2a2a;
+    background-color: var(--bg-sidebar);
 }
 
 .chat-item .chat-actions {
@@ -283,11 +332,11 @@ pre {
 }
 
 .edit-btn {
-    color: #00aaff;
+    color: var(--snackbar-button);
 }
 
 .delete-btn {
-    color: #ff4444;
+    color: var(--accent-failed);
 }
 .sidebar-footer {
     margin-top: auto;
@@ -295,7 +344,7 @@ pre {
 .settings-btn {
     background: none;
     border: none;
-    color: #a0a0a0;
+    color: var(--text-placeholder);
     cursor: pointer;
     padding: 5px;
     border-radius: 50%;
@@ -303,14 +352,26 @@ pre {
     align-items: center;
     justify-content: center;
     transition: background-color 0.2s, color 0.2s;
+    position: absolute;
+    right: 20px;
 }
 
 .settings-btn:hover {
-    background-color: #333;
-    color: #ffffff;
+    background-color: var(--bg-task-card-footer);
+    color: var(--text-primary);
 }
 .chat-container {
     flex-grow: 1;
     padding: 20px;
     overflow-y: auto;
+    background-color: var(--bg-main);
+}
+
+#theme-select {
+    width: 100%;
+    padding: 5px;
+    background-color: var(--bg-sidebar);
+    border: 1px solid var(--bg-task-card-footer);
+    border-radius: 4px;
+    color: var(--text-primary);
 }
