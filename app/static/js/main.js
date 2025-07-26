@@ -22,13 +22,19 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('theme', theme);
     }
 
-    themeSelect.addEventListener('change', (e) => {
-        applyTheme(e.target.value);
-    });
+    if (themeSelect) {
+        themeSelect.addEventListener('change', (e) => {
+            applyTheme(e.target.value);
+        });
 
-    const savedTheme = localStorage.getItem('theme') || 'system';
-    themeSelect.value = savedTheme;
-    applyTheme(savedTheme);
+        const savedTheme = localStorage.getItem('theme') || 'system';
+        themeSelect.value = savedTheme;
+        applyTheme(savedTheme);
+    } else {
+        // Apply theme on pages without a selector
+        const savedTheme = localStorage.getItem('theme') || 'system';
+        applyTheme(savedTheme);
+    }
 
     let chats = {};
     let activeChatId = null;
@@ -156,7 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
     newChatBtn.addEventListener('click', createNewChat);
 
     settingsBtn.addEventListener('click', () => {
-        window.location.href = '/api_keys';
+        window.location.href = '/settings';
     });
 
     async function updateModels() {

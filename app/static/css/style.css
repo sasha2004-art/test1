@@ -343,7 +343,7 @@ pre {
 }
 .settings-btn {
     background: none;
-    border: none;
+    border: 1px solid var(--text-placeholder);
     color: var(--text-placeholder);
     cursor: pointer;
     padding: 5px;
@@ -352,8 +352,6 @@ pre {
     align-items: center;
     justify-content: center;
     transition: background-color 0.2s, color 0.2s;
-    position: absolute;
-    right: 20px;
 }
 
 .settings-btn:hover {
@@ -374,4 +372,16 @@ pre {
     border: 1px solid var(--bg-task-card-footer);
     border-radius: 4px;
     color: var(--text-primary);
+}
+
+.settings-container {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--bg-task-card-footer);
+}
+
+.theme-selector {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }

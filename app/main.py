@@ -27,9 +27,9 @@ def index():
     return render_template("index.html")
 
 
-@app.route("/api_keys")
-def api_keys():
-    return render_template("api_keys.html")
+@app.route("/settings")
+def settings():
+    return render_template("settings.html")
 
 
 @app.route("/generate", methods=["POST"])
