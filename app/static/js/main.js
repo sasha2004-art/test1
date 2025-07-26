@@ -201,11 +201,23 @@ document.addEventListener('DOMContentLoaded', () => {
         radio.addEventListener('change', updateModels);
     });
 
+    const resultBoxWrapper = document.getElementById('result-box-wrapper');
+
+    const upArrow = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>`;
+    const downArrow = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>`;
+
+    function toggleResultView(isVisible) {
+        resultBoxWrapper.style.display = isVisible ? 'block' : 'none';
+        toggleResultBtn.innerHTML = isVisible ? upArrow : downArrow;
+    }
+
     toggleResultBtn.addEventListener('click', () => {
-        const isVisible = resultBox.style.display !== 'none';
-        resultBox.style.display = isVisible ? 'none' : 'block';
-        toggleResultBtn.textContent = isVisible ? 'Развернуть' : 'Свернуть';
+        const isVisible = resultBoxWrapper.style.display !== 'none';
+        toggleResultView(!isVisible);
     });
+
+    // Initial state
+    toggleResultView(true);
 
     downloadResultBtn.addEventListener('click', () => {
         const resultJson = resultBox.textContent;
