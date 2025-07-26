@@ -50,6 +50,7 @@ body {
     padding: 25px;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    position: relative;
 }
 h1, h2 {
     color: var(--text-primary);
@@ -234,12 +235,12 @@ pre {
 .sidebar.collapsed .logo-container h1,
 .sidebar.collapsed .chat-header h2,
 .sidebar.collapsed #new-chat-btn,
-.sidebar.collapsed .sidebar-footer {
+.sidebar.collapsed .sidebar-footer,
+.sidebar.collapsed #settings-btn {
     display: none;
 }
 .logo-container {
     display: flex;
-    justify-content: space-between;
     align-items: center;
     padding-bottom: 20px;
     margin-bottom: 20px;
@@ -251,6 +252,7 @@ pre {
     margin: 0 0 0 10px;
     font-size: 24px;
     border: none;
+    margin-right: auto;
 }
 
 .logo-svg {
@@ -387,4 +389,29 @@ pre {
     display: flex;
     align-items: center;
     gap: 10px;
+}
+
+.home-link {
+    position: absolute;
+    top: 25px;
+    right: 25px;
+    color: var(--text-muted);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px;
+    border-radius: 50%;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.home-link:hover {
+    background-color: var(--bg-task-card-footer);
+    color: var(--text-primary);
+}
+
+.home-link svg {
+    width: 28px;
+    height: 28px;
+    fill: currentColor;
 }

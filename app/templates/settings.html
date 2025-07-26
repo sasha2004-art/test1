@@ -16,6 +16,11 @@
 </head>
 <body>
     <div class="container">
+        <a href="/" class="home-link" title="Назад к генератору">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="28" height="28">
+                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8h5z"/>
+            </svg>
+        </a>
         <h1>Настройка</h1>
         <p>Введите ваши API-ключи, сохраните и проверьте их валидность.</p>
 
@@ -47,7 +52,7 @@
         </div>
 
         <button id="save-keys-btn">Сохранить Ключи</button>
-        <a href="/">Назад к генератору</a>
+        
         <div class="settings-container">
             <div class="theme-selector">
                 <label for="theme-select">Тема:</label>
@@ -60,7 +65,33 @@
         </div>
     </div>
     <script>
-        // Функция для проверки ключа
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- Theme Switcher Logic ---
+        const themeSelect = document.getElementById('theme-select');
+
+        function applyTheme(theme) {
+            if (theme === 'system') {
+                const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                document.documentElement.setAttribute('data-theme', systemTheme);
+            } else {
+                document.documentElement.setAttribute('data-theme', theme);
+            }
+            localStorage.setItem('theme', theme);
+        }
+
+        if (themeSelect) {
+            const savedTheme = localStorage.getItem('theme') || 'system';
+            themeSelect.value = savedTheme;
+            applyTheme(savedTheme);
+
+            themeSelect.addEventListener('change', (e) => {
+                applyTheme(e.target.value);
+            });
+        } else {
+            const savedTheme = localStorage.getItem('theme') || 'system';
+            applyTheme(savedTheme);
+        }
+
         async function checkKey(provider) {
             const input = document.getElementById(`${provider}-api-key-input`);
             const statusEl = document.getElementById(`${provider}-status`);
@@ -96,13 +127,11 @@
             }
         }
 
-        // Сохранение ключей
         document.getElementById('save-keys-btn').addEventListener('click', () => {
             const groqApiKey = document.getElementById('groq-api-key-input').value;
             const openaiApiKey = document.getElementById('openai-api-key-input').value;
             const geminiApiKey = document.getElementById('gemini-api-key-input').value;
 
-            // Сохраняем только если поле не пустое
             if (groqApiKey) localStorage.setItem('groq_api_key', groqApiKey);
             if (openaiApiKey) localStorage.setItem('openai_api_key', openaiApiKey);
             if (geminiApiKey) localStorage.setItem('gemini_api_key', geminiApiKey);
@@ -110,15 +139,14 @@
             alert('Ключи сохранены в локальном хранилище!');
         });
 
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('groq-api-key-input').value = localStorage.getItem('groq_api_key') || '';
-            document.getElementById('openai-api-key-input').value = localStorage.getItem('openai_api_key') || '';
-            document.getElementById('gemini-api-key-input').value = localStorage.getItem('gemini_api_key') || '';
+        document.getElementById('groq-api-key-input').value = localStorage.getItem('groq_api_key') || '';
+        document.getElementById('openai-api-key-input').value = localStorage.getItem('openai_api_key') || '';
+        document.getElementById('gemini-api-key-input').value = localStorage.getItem('gemini_api_key') || '';
 
-            document.getElementById('check-groq-btn').addEventListener('click', () => checkKey('groq'));
-            document.getElementById('check-openai-btn').addEventListener('click', () => checkKey('openai'));
-            document.getElementById('check-gemini-btn').addEventListener('click', () => checkKey('gemini'));
-        });
+        document.getElementById('check-groq-btn').addEventListener('click', () => checkKey('groq'));
+        document.getElementById('check-openai-btn').addEventListener('click', () => checkKey('openai'));
+        document.getElementById('check-gemini-btn').addEventListener('click', () => checkKey('gemini'));
+    });
     </script>
 </body>
 </html>
