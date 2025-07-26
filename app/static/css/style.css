@@ -93,6 +93,8 @@ button:disabled {
     align-items: center;
     justify-content: center;
     transition: background-color 0.2s, color 0.2s;
+    width: auto; /* Allow the button to size to its content */
+    margin-left: auto; /* Push the button to the right */
 }
 
 .icon-btn:hover {
@@ -190,6 +192,7 @@ pre {
 }
 .logo-container {
     display: flex;
+    justify-content: space-between;
     align-items: center;
     padding-bottom: 20px;
     margin-bottom: 20px;
