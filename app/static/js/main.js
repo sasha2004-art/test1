@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
         chatList.innerHTML = '';
         const chatIds = Object.keys(chats);
 
-        const visibleChats = chatsVisible ? chatIds : chatIds.slice(0, 10);
+        const visibleChats = chatsVisible ? chatIds : chatIds.slice(0, 8);
 
         for (const id of visibleChats) {
             const chat = chats[id];
@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
             chatList.appendChild(chatDiv);
         }
 
-        if (chatIds.length > 10) {
+        if (chatIds.length > 8) {
             const toggleBtn = document.createElement('button');
             toggleBtn.textContent = chatsVisible ? 'Свернуть' : 'Развернуть';
             toggleBtn.addEventListener('click', () => {
