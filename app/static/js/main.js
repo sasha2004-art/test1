@@ -1,4 +1,18 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // --- ИЗМЕНЕНИЕ: Обертка для ожидания готовности API PyWebView ---
+    window.addEventListener('pywebviewready', () => {
+        const minimizeBtn = document.getElementById('minimize-btn');
+        const maximizeBtn = document.getElementById('maximize-btn');
+        const closeBtn = document.getElementById('close-btn');
+
+        if (minimizeBtn && window.pywebview && window.pywebview.api) {
+            minimizeBtn.addEventListener('click', () => window.pywebview.api.minimize());
+            maximizeBtn.addEventListener('click', () => window.pywebview.api.toggle_maximize());
+            closeBtn.addEventListener('click', () => window.pywebview.api.close());
+        }
+    });
+    // --- КОНЕЦ ИЗМЕНЕНИЯ ---
+
     const generateBtn = document.getElementById('generate-btn');
     const settingInput = document.getElementById('setting-input');
     const resultBox = document.getElementById('result-box');

@@ -7,7 +7,13 @@ from typing import Any, Dict
 import google.generativeai as genai
 import openai
 from groq import Groq
-# Убираем 'from llama_cpp import Llama' отсюда
+
+# --- ИЗМЕНЕНИЕ: Тестируемый импорт опциональной зависимости ---
+try:
+    from llama_cpp import Llama  # type: ignore[reportMissingImports]
+except ImportError:
+    Llama = None
+# --- КОНЕЦ ИЗМЕНЕНИЯ ---
 
 logger = logging.getLogger(__name__)
 
@@ -83,18 +89,16 @@ def create_quest_from_setting(
 
         elif api_provider == "gemini":
             genai.configure(api_key=api_key)  # type: ignore[reportPrivateImportUsage]
-            gemini_model = genai.GenerativeModel(model)  # type: ignore
+            gemini_model = genai.GenerativeModel(model)  # type: ignore[reportPrivateImportUsage]
             response = gemini_model.generate_content(master_prompt)
             response_content = response.text
 
         elif api_provider == "local":
-            # --- КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Отложенный импорт ---
-            try:
-                from llama_cpp import Llama
-            except ImportError:
-                logger.error("Модуль llama_cpp не установлен. Пожалуйста, перезапустите установку с опцией 'y'.")
+            if Llama is None:
+                logger.error(
+                    "Модуль llama_cpp не установлен. Пожалуйста, перезапустите установку с опцией 'y'."
+                )
                 return {"error": "Поддержка локальных LLM не установлена."}
-            # ----------------------------------------------
 
             model_dir = os.getenv("LOCAL_MODEL_PATH", "quest-generator/models")
             model_path = os.path.join(model_dir, model)

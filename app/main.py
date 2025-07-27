@@ -1,13 +1,12 @@
 import os
 import logging
 from flask import Flask, request, jsonify, render_template
-from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 
 # Загружаем переменные из .env файла
 load_dotenv()
 
-from services.quest_generator import (
+from .services.quest_generator import (  # noqa: E402
     create_quest_from_setting,
     validate_api_key,
     get_available_models,
@@ -23,19 +22,19 @@ if __name__ != "__main__":
     app.logger.handlers = gunicorn_logger.handlers
     app.logger.setLevel(gunicorn_logger.level)
 
+
 @app.route("/")
 def index():
     # Передаем флаг в шаблон
     return render_template("index.html", use_local_llm=USE_LOCAL_LLM)
+
 
 @app.route("/settings")
 def settings():
     # Передаем флаг в шаблон
     return render_template("settings.html", use_local_llm=USE_LOCAL_LLM)
 
-# ... (остальные эндпоинты остаются без изменений)
-# Копируйте generate_quest_endpoint, validate_api_key_endpoint, available_models_endpoint
-# из вашей предыдущей рабочей версии, они не меняются.
+
 @app.route("/generate", methods=["POST"])
 def generate_quest_endpoint():
     data = request.get_json()

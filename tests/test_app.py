@@ -1,6 +1,5 @@
-import json
 import pytest
-from main import app
+from app.main import app
 
 
 @pytest.fixture
@@ -37,7 +36,7 @@ def test_generate_quest_endpoint_success(client, monkeypatch):
         "nodes": [],
     }
     monkeypatch.setattr(
-        "main.create_quest_from_setting",
+        "app.main.create_quest_from_setting",
         lambda setting, api_key, api_provider, model: mock_quest,
     )
     response = client.post(
@@ -67,7 +66,7 @@ def test_generate_quest_endpoint_generator_error(client, monkeypatch):
     """Тестирует ответ 500, когда генератор квестов возвращает ошибку."""
     error_response = {"error": "Произошла ошибка генерации"}
     monkeypatch.setattr(
-        "main.create_quest_from_setting",
+        "app.main.create_quest_from_setting",
         lambda setting, api_key, api_provider, model: error_response,
     )
     response = client.post(
@@ -86,7 +85,7 @@ def test_generate_quest_endpoint_generator_error(client, monkeypatch):
 def test_validate_api_key_endpoint_success(client, monkeypatch):
     """Тестирует успешную валидацию ключа через эндпоинт."""
     monkeypatch.setattr(
-        "main.validate_api_key", lambda api_provider, api_key: {"status": "ok"}
+        "app.main.validate_api_key", lambda api_provider, api_key: {"status": "ok"}
     )
     response = client.post(
         "/validate_api_key", json={"api_provider": "groq", "api_key": "valid_key"}
@@ -98,7 +97,7 @@ def test_validate_api_key_endpoint_success(client, monkeypatch):
 def test_validate_api_key_endpoint_failure(client, monkeypatch):
     """Тестирует неудачную валидацию ключа через эндпоинт."""
     monkeypatch.setattr(
-        "main.validate_api_key",
+        "app.main.validate_api_key",
         lambda api_provider, api_key: {
             "status": "error",
             "message": "Неверный API ключ.",
@@ -134,7 +133,7 @@ def test_get_available_models_endpoint_success(client, monkeypatch):
     """Тестирует успешное получение списка моделей."""
     mock_models = {"models": ["model1", "model2"]}
     monkeypatch.setattr(
-        "main.get_available_models", lambda api_provider, api_key: mock_models
+        "app.main.get_available_models", lambda api_provider, api_key: mock_models
     )
     response = client.post(
         "/api/models", json={"api_provider": "groq", "api_key": "valid_key"}
@@ -147,7 +146,7 @@ def test_get_available_models_endpoint_failure(client, monkeypatch):
     """Тестирует неудачное получение списка моделей."""
     error_response = {"error": "Failed to fetch"}
     monkeypatch.setattr(
-        "main.get_available_models", lambda api_provider, api_key: error_response
+        "app.main.get_available_models", lambda api_provider, api_key: error_response
     )
     response = client.post(
         "/api/models", json={"api_provider": "groq", "api_key": "invalid_key"}
