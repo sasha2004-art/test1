@@ -2,7 +2,13 @@ import sys
 from pathlib import Path
 import webview
 import shutil
+from huggingface_hub import hf_hub_download
 import json
+import logging
+
+# --- Настройка логирования ---
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 # --- РЕШЕНИЕ ПРОБЛЕМЫ ИМПОРТОВ ---
 # Добавляем корневую папку проекта и папку app в пути поиска модулей
@@ -125,6 +131,30 @@ class Api:
         status = "ok" if error_count == 0 else "error"
 
         return {"status": status, "message": final_message}
+
+    def download_model(self, repo_id, filename):
+        """Скачивает модель из Hugging Face Hub в папку 'models'."""
+        try:
+            models_dir = Path.cwd() / "models"
+            models_dir.mkdir(exist_ok=True)
+
+            logger.info(f"Starting download: {repo_id}/{filename}")
+
+            hf_hub_download(
+                repo_id=repo_id,
+                filename=filename,
+                local_dir=models_dir,
+                local_dir_use_symlinks=False,  # Рекомендуется для Windows
+            )
+
+            logger.info(f"Successfully downloaded {filename} to {models_dir}")
+            return {
+                "status": "ok",
+                "message": f"Модель '{filename}' успешно скачана в папку 'models'.",
+            }
+        except Exception as e:
+            logger.error(f"Error downloading model: {e}")
+            return {"status": "error", "message": f"Ошибка при скачивании: {e}"}
 
 
 if __name__ == "__main__":

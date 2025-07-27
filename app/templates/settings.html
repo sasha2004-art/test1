@@ -63,6 +63,18 @@
             margin-top: 15px;
             display: none;
         }
+        .search-bar { margin-bottom: 15px; }
+        .search-bar input { width: 100%; padding: 10px; border-radius: 4px; border: 1px solid var(--bg-task-card-footer); background-color: var(--bg-sidebar); color: var(--text-primary); }
+        .tabs { display: flex; border-bottom: 1px solid var(--bg-task-card-footer); margin-bottom: 15px; }
+        .tab-link { background: none; border: none; padding: 10px 15px; cursor: pointer; color: var(--text-muted); border-bottom: 2px solid transparent; }
+        .tab-link.active { color: var(--accent-color); border-bottom-color: var(--accent-color); }
+        .model-card { background-color: var(--bg-sidebar); border-radius: 4px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .model-info h4 { margin: 0 0 5px; }
+        .model-info p { margin: 0; font-size: 14px; color: var(--text-muted); }
+        .model-actions .download-btn { font-size: 14px; padding: 8px 12px; }
+        .tooltip { position: relative; display: inline-block; }
+        .tooltip .tooltiptext { visibility: hidden; width: 220px; background-color: #555; color: #fff; text-align: center; border-radius: 6px; padding: 5px 0; position: absolute; z-index: 1; bottom: 125%; left: 50%; margin-left: -110px; opacity: 0; transition: opacity 0.3s; }
+        .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
     </style>
 </head>
 <body>
@@ -124,6 +136,26 @@
                     <button id="move-btn">Переместить в проект</button>
                 </div>
                 <div id="operation-status"></div>
+            </div>
+        </div>
+
+        <div class="collapsible-container">
+            <div class="collapsible-header" data-target="recommended-models-content">
+                <div class="result-box-title">Рекомендуемые модели GGUF</div>
+                <button class="icon-btn toggle-btn"></button>
+            </div>
+            <div class="collapsible-content" id="recommended-models-content">
+                <div class="search-bar">
+                    <input type="text" id="model-search-input" placeholder="Поиск моделей...">
+                </div>
+                <div class="tabs">
+                    <button class="tab-link active" data-tab="low">Для слабых ПК</button>
+                    <button class="tab-link" data-tab="medium">Для средних ПК</button>
+                    <button class="tab-link" data-tab="high">Для мощных ПК</button>
+                </div>
+                <div id="model-list-container">
+                    <!-- Модели будут загружены сюда -->
+                </div>
             </div>
         </div>
         {% endif %}
@@ -301,6 +333,98 @@
 
         copyBtn.addEventListener('click', () => handleFileAction('copy'));
         moveBtn.addEventListener('click', () => handleFileAction('move'));
+
+        // --- Логика рекомендуемых моделей ---
+        const modelSearchInput = document.getElementById('model-search-input');
+        const tabLinks = document.querySelectorAll('.tab-link');
+        const modelListContainer = document.getElementById('model-list-container');
+
+        let allModels = {};
+        let currentTab = 'low';
+
+        async function fetchRecommendedModels() {
+            try {
+                const response = await fetch('/api/recommended_models');
+                allModels = await response.json();
+                renderModels();
+            } catch (error) {
+                console.error('Ошибка при загрузке рекомендуемых моделей:', error);
+                modelListContainer.innerHTML = '<p>Не удалось загрузить модели. Попробуйте позже.</p>';
+            }
+        }
+
+        function renderModels() {
+            const searchTerm = modelSearchInput.value.toLowerCase();
+            const models = allModels[currentTab] || [];
+
+            const filteredModels = models.filter(model =>
+                model.repo_id.toLowerCase().includes(searchTerm) ||
+                model.filename.toLowerCase().includes(searchTerm) ||
+                model.description.toLowerCase().includes(searchTerm)
+            );
+
+            modelListContainer.innerHTML = '';
+
+            if (filteredModels.length === 0) {
+                modelListContainer.innerHTML = '<p>Модели не найдены.</p>';
+                return;
+            }
+
+            filteredModels.forEach(model => {
+                const card = document.createElement('div');
+                card.className = 'model-card';
+                card.innerHTML = `
+                    <div class="model-info">
+                        <h4>${model.filename}</h4>
+                        <p>${model.description}</p>
+                        <div class="tooltip">
+                            <p><strong>Требования:</strong> ${model.requirements}</p>
+                            <span class="tooltiptext">Репозиторий: ${model.repo_id}</span>
+                        </div>
+                    </div>
+                    <div class="model-actions">
+                        <button class="download-btn" data-repo-id="${model.repo_id}" data-filename="${model.filename}">Скачать</button>
+                    </div>
+                `;
+                modelListContainer.appendChild(card);
+            });
+        }
+
+        tabLinks.forEach(tab => {
+            tab.addEventListener('click', () => {
+                currentTab = tab.dataset.tab;
+                tabLinks.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                renderModels();
+            });
+        });
+
+        modelSearchInput.addEventListener('input', renderModels);
+
+        modelListContainer.addEventListener('click', async (e) => {
+            if (e.target.classList.contains('download-btn')) {
+                const button = e.target;
+                const { repoId, filename } = button.dataset;
+
+                button.textContent = 'Скачивание...';
+                button.disabled = true;
+
+                try {
+                    const result = await window.pywebview.api.download_model(repoId, filename);
+                    alert(result.message); // Показываем результат пользователю
+                } catch (error) {
+                    console.error('Ошибка при скачивании модели:', error);
+                    alert('Произошла ошибка при скачивании модели. См. консоль для деталей.');
+                } finally {
+                    button.textContent = 'Скачать';
+                    button.disabled = false;
+                }
+            }
+        });
+
+        if (document.getElementById('recommended-models-content')) {
+            fetchRecommendedModels();
+        }
         {% endif %}
     });
     </script>

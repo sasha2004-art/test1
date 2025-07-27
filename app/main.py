@@ -11,6 +11,7 @@ from .services.quest_generator import (  # noqa: E402
     validate_api_key,
     get_available_models,
 )
+from .models.recommended_models import RECOMMENDED_MODELS
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
 
@@ -99,3 +100,8 @@ def available_models_endpoint():
     models = get_available_models(api_provider=api_provider, api_key=api_key)
 
     return jsonify(models)
+
+
+@app.route("/api/recommended_models", methods=["GET"])
+def recommended_models_endpoint():
+    return jsonify(RECOMMENDED_MODELS)
