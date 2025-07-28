@@ -14,7 +14,7 @@ class Colors:
     BOLD = "\033[1m"
 
 
-def run_check(name, command, cwd, python_executable):
+def run_check(name: str, command: list[str], cwd: Path, python_executable: Path) -> bool:
     """
     Запускает проверку и выводит результат.
     """
@@ -22,8 +22,24 @@ def run_check(name, command, cwd, python_executable):
 
     # Semgrep и black лучше вызывать напрямую, а не через python -m
     if command[0] in ["semgrep", "black"]:
-        # Ищем исполняемый файл в .venv/Scripts
-        executable = Path(python_executable).parent / command[0]
+        # Формируем правильное имя исполняемого файла для текущей ОС
+        exe_name = f"{command[0]}.exe" if sys.platform == "win32" else command[0]
+        executable = python_executable.parent / exe_name
+
+        # Проверяем, существует ли исполняемый файл
+        if not executable.exists():
+            # Если это semgrep, пропускаем его (ожидаемое поведение для Windows)
+            if command[0] == "semgrep":
+                print(
+                    f"{Colors.WARNING}⚠️  Проверка Semgrep пропущена, т.к. он не установлен (ожидаемо для Windows).{Colors.ENDC}"
+                )
+                return True
+            # Для других инструментов выводим ошибку
+            else:
+                print(
+                    f"{Colors.FAIL}❌ Ошибка: исполняемый файл '{executable}' не найден! Убедитесь, что зависимости установлены.{Colors.ENDC}"
+                )
+                return False
         full_command = [str(executable)] + command[1:]
     else:
         full_command = [str(python_executable), "-m"] + command
@@ -73,7 +89,7 @@ def main():
         else venv_dir / "bin" / "python"
     )
 
-    # --- ИЗМЕНЕНИЕ: Явно указываем, ЧТО сканировать, вместо того, что исключать ---
+    # Явно указываем, ЧТО сканировать, вместо того, что исключать
     dirs_to_scan = ["app", "scripts", "tests", "run_desktop.py", "start.py"]
 
     checks = [

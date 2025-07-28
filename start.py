@@ -14,9 +14,13 @@ class Colors:
     ENDC = "\033[0m"
 
 
-def run_command_live(command):
+def run_command_live(command, env=None):
+    """
+    Запускает команду и возвращает True в случае успеха, False - при ошибке.
+    """
     try:
-        subprocess.run(command, check=True)
+        # subprocess.run с check=True будет стримить вывод и выбросит исключение при ошибке
+        subprocess.run(command, check=True, env=env)
         return True
     except (subprocess.CalledProcessError, FileNotFoundError) as e:
         print(
@@ -65,19 +69,19 @@ def main():
 
     print(f"\n{Colors.OKBLUE}Установка зависимостей...{Colors.ENDC}")
     if not run_command_live(
-        [python_executable, "-m", "pip", "install", "-r", "requirements.txt"]
+        [str(python_executable), "-m", "pip", "install", "-r", "requirements.txt"]
     ):
         sys.exit(1)
     print(f"{Colors.OKGREEN}Основные зависимости установлены.{Colors.ENDC}")
 
-    # --- Установка llama-cpp-python по условию ---
+    # --- Двухэтапная установка llama-cpp-python с fallback ---
     if use_local_llm:
         print(
-            f"\n{Colors.OKBLUE}Установка llama-cpp-python с поддержкой GPU (NVIDIA)...{Colors.ENDC}"
+            f"\n{Colors.OKBLUE}Попытка №1: Установка llama-cpp-python с поддержкой GPU (NVIDIA)...{Colors.ENDC}"
         )
         env = {**os.environ, "CMAKE_ARGS": "-DLLAMA_CUBLAS=on", "FORCE_CMAKE": "1"}
         llama_install_command = [
-            python_executable,
+            str(python_executable),
             "-m",
             "pip",
             "install",
@@ -87,20 +91,41 @@ def main():
             "--no-binary",
             ":all:",
         ]
-        try:
-            subprocess.run(llama_install_command, env=env, check=True)
-            print(f"{Colors.OKGREEN}llama-cpp-python успешно установлен!{Colors.ENDC}")
-        except subprocess.CalledProcessError:
-            print(f"{Colors.FAIL}Не удалось установить llama-cpp-python.{Colors.ENDC}")
+
+        if run_command_live(llama_install_command, env=env):
+            print(f"{Colors.OKGREEN}llama-cpp-python успешно установлен с поддержкой GPU!{Colors.ENDC}")
+        else:
+            print(f"{Colors.FAIL}\nНе удалось установить версию с поддержкой GPU.{Colors.ENDC}")
             print(
-                f"{Colors.WARNING}Убедитесь, что установлены 'Visual Studio Build Tools' и NVIDIA CUDA Toolkit.{Colors.ENDC}"
+                f"\n{Colors.OKBLUE}Попытка №2: Установка стандартной версии llama-cpp-python (fallback)...{Colors.ENDC}"
             )
-            sys.exit(1)
+            print(
+                f"{Colors.WARNING}Эта версия может использовать pre-compiled wheels и с большей вероятностью установится.{Colors.ENDC}"
+            )
+
+            cpu_install_command = [
+                str(python_executable),
+                "-m",
+                "pip",
+                "install",
+                "llama-cpp-python",
+            ]
+            if run_command_live(cpu_install_command):
+                print(f"{Colors.OKGREEN}Стандартная версия llama-cpp-python успешно установлена.{Colors.ENDC}")
+            else:
+                print(f"{Colors.FAIL}\nНе удалось установить llama-cpp-python даже в стандартной конфигурации.{Colors.ENDC}")
+                print(
+                    f"{Colors.WARNING}Пожалуйста, убедитесь, что у вас установлены 'Visual Studio Build Tools' (с компонентом 'C++ desktop development').{Colors.ENDC}"
+                )
+                print(
+                    f"{Colors.WARNING}Для поддержки GPU также требуется совместимый NVIDIA CUDA Toolkit.{Colors.ENDC}"
+                )
+                sys.exit(1)
     else:
         print(f"\n{Colors.OKBLUE}Пропускаем установку llama-cpp-python.{Colors.ENDC}")
 
     print(f"\n{Colors.OKGREEN}Установка завершена. Запуск приложения...{Colors.ENDC}")
-    if not run_command_live([python_executable, "run_desktop.py"]):
+    if not run_command_live([str(python_executable), "run_desktop.py"]):
         sys.exit(1)
 
 

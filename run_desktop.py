@@ -159,7 +159,7 @@ class Api:
 
 if __name__ == "__main__":
     api = Api()
-    icon_path = str(project_root / "app" / "static" / "img" / "iconca.svg")
+    # --- ИЗМЕНЕНИЕ: Удалена передача иконки, вызывающая ошибку ---
     window = webview.create_window(
         "AI Quest Generator",
         app,
@@ -168,8 +168,8 @@ if __name__ == "__main__":
         height=800,
         resizable=True,
         frameless=True,
-        icon=icon_path,  # type: ignore[reportCallIssue]
         easy_drag=False,  # Управление перетаскиванием отдано CSS
     )
+    # --- КОНЕЦ ИЗМЕНЕНИЯ ---
     api.set_window(window)  # Передаем объект окна в API
     webview.start(debug=True)

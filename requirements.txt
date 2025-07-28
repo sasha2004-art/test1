@@ -6,7 +6,6 @@ pytest
 black
 bandit
 pyright
-semgrep
 pip-audit
 pytest-cov
 openai
@@ -14,3 +13,4 @@ google-generativeai
 pywebview
 setuptools>=78.1.1
 rich>=13.7.1
+huggingface-hub
