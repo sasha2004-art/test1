@@ -1,35 +1,40 @@
 import os
 import logging
 from flask import Flask, request, jsonify, render_template
-from services.quest_generator import (
+from dotenv import load_dotenv
+
+# Загружаем переменные из .env файла
+load_dotenv()
+
+from .services.quest_generator import (  # noqa: E402
     create_quest_from_setting,
     validate_api_key,
     get_available_models,
+    delete_local_models,
 )
+from .models.recommended_models import RECOMMENDED_MODELS
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
+
+# Определяем, включены ли локальные LLM
+USE_LOCAL_LLM = os.getenv("USE_LOCAL_LLM", "false").lower() == "true"
 
 if __name__ != "__main__":
     gunicorn_logger = logging.getLogger("gunicorn.error")
     app.logger.handlers = gunicorn_logger.handlers
     app.logger.setLevel(gunicorn_logger.level)
 
-    port = os.getenv("EXTERNAL_PORT", "5001")
-
-    app.logger.info("=" * 60)
-    app.logger.info("  AI Quest Generator запущен!")
-    app.logger.info(f"  Для доступа к приложению откройте: http://localhost:{port}")
-    app.logger.info("=" * 60)
-
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    # Передаем флаг в шаблон
+    return render_template("index.html", use_local_llm=USE_LOCAL_LLM)
 
 
 @app.route("/settings")
 def settings():
-    return render_template("settings.html")
+    # Передаем флаг в шаблон
+    return render_template("settings.html", use_local_llm=USE_LOCAL_LLM)
 
 
 @app.route("/generate", methods=["POST"])
@@ -96,3 +101,37 @@ def available_models_endpoint():
     models = get_available_models(api_provider=api_provider, api_key=api_key)
 
     return jsonify(models)
+
+
+@app.route("/api/recommended_models", methods=["GET"])
+def recommended_models_endpoint():
+    return jsonify(RECOMMENDED_MODELS)
+
+
+@app.route("/api/local_models", methods=["GET"])
+def get_local_models():
+    """Возвращает список локальных моделей GGUF, делегируя сервисному слою."""
+    # ИЗМЕНЕНИЕ: Делегируем получение моделей сервисному слою для консистентности (A3)
+    # Ключ API не используется для локальных моделей, передаем пустую строку.
+    result = get_available_models(api_provider="local", api_key="")
+    if "error" in result:
+        # get_available_models для local теперь не должен возвращать ошибку,
+        # но для надежности оставим проверку.
+        return jsonify(result), 500
+    return jsonify(result)
+
+
+@app.route("/api/local_models/delete", methods=["POST"])
+def delete_local_models_endpoint():
+    """Удаляет указанные файлы локальных моделей."""
+    data = request.get_json()
+    if not data or "filenames" not in data or not isinstance(data["filenames"], list):
+        return jsonify({"error": "Требуется 'filenames' в виде списка."}), 400
+
+    result = delete_local_models(filenames=data["filenames"])
+
+    status_code = 200
+    if result.get("status") == "error":
+        status_code = 500
+
+    return jsonify(result), status_code

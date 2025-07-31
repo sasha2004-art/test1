@@ -1,4 +1,18 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // --- ИЗМЕНЕНИЕ: Обертка для ожидания готовности API PyWebView ---
+    window.addEventListener('pywebviewready', () => {
+        const minimizeBtn = document.getElementById('minimize-btn');
+        const maximizeBtn = document.getElementById('maximize-btn');
+        const closeBtn = document.getElementById('close-btn');
+
+        if (minimizeBtn && window.pywebview && window.pywebview.api) {
+            minimizeBtn.addEventListener('click', () => window.pywebview.api.minimize());
+            maximizeBtn.addEventListener('click', () => window.pywebview.api.toggle_maximize());
+            closeBtn.addEventListener('click', () => window.pywebview.api.close());
+        }
+    });
+    // --- КОНЕЦ ИЗМЕНЕНИЯ ---
+
     const generateBtn = document.getElementById('generate-btn');
     const settingInput = document.getElementById('setting-input');
     const resultBox = document.getElementById('result-box');
@@ -81,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
             chatDiv.appendChild(chatTitle);
 
             const editBtn = document.createElement('button');
-            editBtn.innerHTML = '&#9998;'; // Edit icon
+            editBtn.innerHTML = '✎'; // Edit icon
             editBtn.classList.add('edit-btn');
             editBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -94,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             const deleteBtn = document.createElement('button');
-            deleteBtn.innerHTML = '&#128465;'; // Trash icon
+            deleteBtn.innerHTML = ''; // Trash icon
             deleteBtn.classList.add('delete-btn');
             deleteBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -167,10 +181,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function updateModels() {
         const selectedProvider = document.querySelector('input[name="api_provider"]:checked').value;
+
+        if (selectedProvider === 'local') {
+            try {
+                const response = await fetch('/api/local_models');
+                const data = await response.json();
+                if (response.ok && data.models) {
+                    modelSelector.innerHTML = '';
+                    // ИЗМЕНЕНИЕ: Обработка нового формата ответа (список объектов)
+                    data.models.forEach(model => {
+                        const option = document.createElement('option');
+                        option.value = model.name;
+                        option.textContent = model.name;
+                        modelSelector.appendChild(option);
+                    });
+                    modelSelectorGroup.style.display = 'block';
+                } else {
+                    modelSelectorGroup.style.display = 'none';
+                    console.error('Failed to fetch local models:', data.error);
+                }
+            } catch (error) {
+                modelSelectorGroup.style.display = 'none';
+                console.error('Error fetching local models:', error);
+            }
+            return;
+        }
+
         const apiKey = localStorage.getItem(`${selectedProvider}_api_key`);
         const cachedModels = localStorage.getItem(`${selectedProvider}_models`);
 
-        if (!apiKey) {
+        if (!apiKey && selectedProvider !== 'local') {
             modelSelectorGroup.style.display = 'none';
             return;
         }
@@ -244,20 +284,23 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initial state
     toggleResultView(true);
 
-    downloadResultBtn.addEventListener('click', () => {
+    downloadResultBtn.addEventListener('click', async () => {
         const resultJson = resultBox.textContent;
         try {
-            JSON.parse(resultJson); // Check if it's a valid JSON
-            const blob = new Blob([resultJson], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `quest_result_${Date.now()}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            // Проверяем, что в блоке валидный JSON
+            JSON.parse(resultJson);
+    
+            if (window.pywebview && window.pywebview.api) {
+                // Вызываем нативный диалог сохранения через Python
+                await window.pywebview.api.save_quest_to_file(resultJson);
+            } else {
+                // Если API не доступно (например, при отладке в обычном браузере),
+                // выводим сообщение об ошибке, так как это ключевая функция десктопного приложения.
+                alert("Функция сохранения доступна только в десктопном приложении.");
+                console.error("PyWebView API not found. Cannot trigger download.");
+            }
         } catch (e) {
+            // Это сработает, если в resultBox невалидный JSON (например, текст ошибки или "Генерация...")
             alert('Невозможно скачать, так как результат не является валидным JSON.');
         }
     });
@@ -277,7 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        if (!apiKey) {
+        if (!apiKey && selectedProvider !== 'local') {
             alert(`API-ключ для провайдера "${selectedProvider}" не найден. Пожалуйста, добавьте его на странице настройки ключей.`);
             window.location.href = '/api_keys';
             return;

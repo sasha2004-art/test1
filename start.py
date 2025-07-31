@@ -1,94 +1,133 @@
-import os
 import sys
 import subprocess
+import venv
+from pathlib import Path
+import os
 
 
 class Colors:
     HEADER = "\033[95m"
     OKBLUE = "\033[94m"
-    OKCYAN = "\033[96m"
     OKGREEN = "\033[92m"
     WARNING = "\033[93m"
     FAIL = "\033[91m"
     ENDC = "\033[0m"
-    BOLD = "\033[1m"
-    UNDERLINE = "\033[4m"
 
 
-def check_docker_installed():
-    """Проверяет, установлен ли Docker и доступен ли он в PATH."""
-    print(f"{Colors.OKBLUE}Проверка наличия Docker...{Colors.ENDC}")
+def run_command_live(command, env=None):
+    """
+    Запускает команду и возвращает True в случае успеха, False - при ошибке.
+    """
     try:
-        subprocess.run(
-            ["docker", "--version"],
-            check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        print(f"{Colors.OKGREEN}Docker найден! Продолжаем...{Colors.ENDC}")
+        # subprocess.run с check=True будет стримить вывод и выбросит исключение при ошибке
+        subprocess.run(command, check=True, env=env)
         return True
-    except (subprocess.CalledProcessError, FileNotFoundError):
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
         print(
-            f"\n{Colors.FAIL}ОШИБКА: Docker не найден или сервис Docker не запущен.{Colors.ENDC}"
-        )
-        print(
-            f"{Colors.WARNING}Этот проект требует Docker для работы. Пожалуйста, установите Docker Desktop и убедитесь, что он запущен.{Colors.ENDC}"
-        )
-        print(
-            f"Ссылка для скачивания: {Colors.UNDERLINE}https://www.docker.com/products/docker-desktop/{Colors.ENDC}\n"
+            f"{Colors.FAIL}Ошибка выполнения команды '{' '.join(map(str, command))}': {e}{Colors.ENDC}"
         )
         return False
 
 
-def run_command(command):
-    """Запускает команду и передает ее вывод в консоль."""
-    try:
-        process = subprocess.run(command, shell=True, check=True)
-        return process.returncode
-    except subprocess.CalledProcessError as e:
-        print(f"{Colors.FAIL}Ошибка выполнения скрипта: {e}{Colors.ENDC}")
-        return e.returncode
-    except FileNotFoundError:
-        print(
-            f"{Colors.FAIL}Команда не найдена. Убедитесь, что у вас установлены необходимые инструменты.{Colors.ENDC}"
-        )
-        return 1
+def setup_environment(project_root, use_local_llm):
+    """Создает .env файл с настройками."""
+    env_file_path = project_root / ".env"
+    with open(env_file_path, "w") as f:
+        f.write(f"USE_LOCAL_LLM={str(use_local_llm).lower()}\n")
+    print(f"{Colors.OKGREEN}.env файл сконфигурирован.{Colors.ENDC}")
 
 
 def main():
-    """Главная функция для определения ОС и запуска соответствующего скрипта."""
-    print(f"{Colors.HEADER}====================================={Colors.ENDC}")
-    print(f"{Colors.HEADER}  Универсальный Запускатор Проекта  {Colors.ENDC}")
-    print(f"{Colors.HEADER}====================================={Colors.ENDC}\n")
+    print(f"{Colors.HEADER}--- AI Quest Generator: Desktop Setup ---{Colors.ENDC}")
+    project_root = Path(__file__).parent
+    venv_dir = project_root / ".venv"
 
-    if not check_docker_installed():
-        sys.exit(1)
-
-    script_dir = "scripts"
-    linux_script = os.path.join(script_dir, "start-docker.sh")
-    windows_script = os.path.join(script_dir, "start-docker.ps1")
-
-    if os.name == "posix":
-        print(
-            f"\n{Colors.OKCYAN}Обнаружена Linux/macOS. Запуск {linux_script}...{Colors.ENDC}\n"
+    # --- Интерактивный выбор ---
+    choice = (
+        input(
+            f"{Colors.WARNING}Хотите установить поддержку локальных LLM (llama.cpp)? (y/n): {Colors.ENDC}"
         )
-        run_command(f"chmod +x {linux_script}")
-        return_code = run_command(f"./{linux_script}")
-    elif os.name == "nt":
-        print(
-            f"\n{Colors.OKCYAN}Обнаружена Windows. Запуск {windows_script}...{Colors.ENDC}\n"
-        )
-        command = f"powershell.exe -ExecutionPolicy Bypass -File .\\{windows_script}"
-        return_code = run_command(command)
+        .lower()
+        .strip()
+    )
+    use_local_llm = choice == "y"
+
+    setup_environment(project_root, use_local_llm)
+
+    if not venv_dir.exists():
+        print(f"{Colors.OKBLUE}Создание виртуального окружения...{Colors.ENDC}")
+        venv.create(venv_dir, with_pip=True)
+        print(f"{Colors.OKGREEN}Виртуальное окружение создано.{Colors.ENDC}")
     else:
-        print(
-            f"\n{Colors.FAIL}Неподдерживаемая операционная система: {os.name}{Colors.ENDC}"
-        )
-        return_code = 1
+        print(f"{Colors.OKGREEN}Виртуальное окружение найдено.{Colors.ENDC}")
 
-    sys.exit(return_code)
+    python_executable = (
+        venv_dir / "Scripts" / "python.exe"
+        if sys.platform == "win32"
+        else venv_dir / "bin" / "python"
+    )
+
+    print(f"\n{Colors.OKBLUE}Установка зависимостей...{Colors.ENDC}")
+    if not run_command_live(
+        [str(python_executable), "-m", "pip", "install", "-r", "requirements.txt"]
+    ):
+        sys.exit(1)
+    print(f"{Colors.OKGREEN}Основные зависимости установлены.{Colors.ENDC}")
+
+    # --- Двухэтапная установка llama-cpp-python с fallback ---
+    if use_local_llm:
+        print(
+            f"\n{Colors.OKBLUE}Попытка №1: Установка llama-cpp-python с поддержкой GPU (NVIDIA)...{Colors.ENDC}"
+        )
+        env = {**os.environ, "CMAKE_ARGS": "-DLLAMA_CUBLAS=on", "FORCE_CMAKE": "1"}
+        llama_install_command = [
+            str(python_executable),
+            "-m",
+            "pip",
+            "install",
+            "llama-cpp-python",
+            "--force-reinstall",
+            "--no-cache-dir",
+            "--no-binary",
+            ":all:",
+        ]
+
+        if run_command_live(llama_install_command, env=env):
+            print(f"{Colors.OKGREEN}llama-cpp-python успешно установлен с поддержкой GPU!{Colors.ENDC}")
+        else:
+            print(f"{Colors.FAIL}\nНе удалось установить версию с поддержкой GPU.{Colors.ENDC}")
+            print(
+                f"\n{Colors.OKBLUE}Попытка №2: Установка стандартной версии llama-cpp-python (fallback)...{Colors.ENDC}"
+            )
+            print(
+                f"{Colors.WARNING}Эта версия может использовать pre-compiled wheels и с большей вероятностью установится.{Colors.ENDC}"
+            )
+
+            cpu_install_command = [
+                str(python_executable),
+                "-m",
+                "pip",
+                "install",
+                "llama-cpp-python",
+            ]
+            if run_command_live(cpu_install_command):
+                print(f"{Colors.OKGREEN}Стандартная версия llama-cpp-python успешно установлена.{Colors.ENDC}")
+            else:
+                print(f"{Colors.FAIL}\nНе удалось установить llama-cpp-python даже в стандартной конфигурации.{Colors.ENDC}")
+                print(
+                    f"{Colors.WARNING}Пожалуйста, убедитесь, что у вас установлены 'Visual Studio Build Tools' (с компонентом 'C++ desktop development').{Colors.ENDC}"
+                )
+                print(
+                    f"{Colors.WARNING}Для поддержки GPU также требуется совместимый NVIDIA CUDA Toolkit.{Colors.ENDC}"
+                )
+                sys.exit(1)
+    else:
+        print(f"\n{Colors.OKBLUE}Пропускаем установку llama-cpp-python.{Colors.ENDC}")
+
+    print(f"\n{Colors.OKGREEN}Установка завершена. Запуск приложения...{Colors.ENDC}")
+    if not run_command_live([str(python_executable), "run_desktop.py"]):
+        sys.exit(1)
 
 
 if __name__ == "__main__":
     main()
-
