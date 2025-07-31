@@ -7,14 +7,14 @@ RECOMMENDED_MODELS = {
             "requirements": "≥ 4GB VRAM или ≥ 8GB RAM (для CPU)"
         },
         {
-            "repo_id": "google/gemma-2b-it-GGUF",
+            "repo_id": "google/gemma-2b-it-gguf",
             "filename": "gemma-2b-it.Q4_K_M.gguf",
             "description": "Модель от Google (2B параметров), оптимизированная для диалогов и инструкций. Хорошая производительность.",
             "requirements": "≥ 3GB VRAM или ≥ 8GB RAM (для CPU)"
         },
         {
-            "repo_id": "stabilityai/stablelm-2-zephyr-1_6b-GGUF",
-            "filename": "stablelm-2-zephyr-1_6b.Q4_K_M.gguf",
+            "repo_id": "lmstudio-ai/stablelm-2-zephyr-1_6b-GGUF",
+            "filename": "stablelm-2-zephyr-1_6b-Q4_K_M.gguf",
             "description": "Очень компактная (1.6B параметров), но способная модель. Идеальна для самых слабых систем.",
             "requirements": "≥ 2GB VRAM или ≥ 8GB RAM (для CPU)"
         }
@@ -22,7 +22,7 @@ RECOMMENDED_MODELS = {
     "medium": [
         {
             "repo_id": "meta-llama/Llama-3-8B-Instruct-GGUF",
-            "filename": "Meta-Llama-3-8B-Instruct.Q4_K_M.gguf",
+            "filename": "Meta-Llama-3-8B-Instruct-Q4_K_M.gguf",
             "description": "State-of-the-art модель от Meta (8B параметров). Считается одной из лучших в своем размере.",
             "requirements": "≥ 8GB VRAM или ≥ 16GB RAM (для CPU)"
         },
@@ -54,7 +54,8 @@ RECOMMENDED_MODELS = {
         },
         {
             "repo_id": "NousResearch/Nous-Hermes-2-Yi-34B-GGUF",
-            "filename": "nous-hermes-2-yi-34b.Q4_K_M.gguf",
+            # ИСПРАВЛЕНИЕ: Указано корректное имя файла, которое существует в репозитории.
+            "filename": "nous-hermes-2-yi-34b.Q5_K_M.gguf",
             "description": "Очень сильная модель на 34B параметров. Отличный выбор для тех, у кого много VRAM, но не хватает для 70B моделей.",
             "requirements": "≥ 24GB VRAM или ≥ 32GB RAM (для CPU)"
         },

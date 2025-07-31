@@ -10,6 +10,7 @@ from .services.quest_generator import (  # noqa: E402
     create_quest_from_setting,
     validate_api_key,
     get_available_models,
+    delete_local_models,
 )
 from .models.recommended_models import RECOMMENDED_MODELS
 
@@ -105,3 +106,32 @@ def available_models_endpoint():
 @app.route("/api/recommended_models", methods=["GET"])
 def recommended_models_endpoint():
     return jsonify(RECOMMENDED_MODELS)
+
+
+@app.route("/api/local_models", methods=["GET"])
+def get_local_models():
+    """Возвращает список локальных моделей GGUF, делегируя сервисному слою."""
+    # ИЗМЕНЕНИЕ: Делегируем получение моделей сервисному слою для консистентности (A3)
+    # Ключ API не используется для локальных моделей, передаем пустую строку.
+    result = get_available_models(api_provider="local", api_key="")
+    if "error" in result:
+        # get_available_models для local теперь не должен возвращать ошибку,
+        # но для надежности оставим проверку.
+        return jsonify(result), 500
+    return jsonify(result)
+
+
+@app.route("/api/local_models/delete", methods=["POST"])
+def delete_local_models_endpoint():
+    """Удаляет указанные файлы локальных моделей."""
+    data = request.get_json()
+    if not data or "filenames" not in data or not isinstance(data["filenames"], list):
+        return jsonify({"error": "Требуется 'filenames' в виде списка."}), 400
+
+    result = delete_local_models(filenames=data["filenames"])
+
+    status_code = 200
+    if result.get("status") == "error":
+        status_code = 500
+
+    return jsonify(result), status_code

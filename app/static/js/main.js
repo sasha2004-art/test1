@@ -181,10 +181,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function updateModels() {
         const selectedProvider = document.querySelector('input[name="api_provider"]:checked').value;
+
+        if (selectedProvider === 'local') {
+            try {
+                const response = await fetch('/api/local_models');
+                const data = await response.json();
+                if (response.ok && data.models) {
+                    modelSelector.innerHTML = '';
+                    // ИЗМЕНЕНИЕ: Обработка нового формата ответа (список объектов)
+                    data.models.forEach(model => {
+                        const option = document.createElement('option');
+                        option.value = model.name;
+                        option.textContent = model.name;
+                        modelSelector.appendChild(option);
+                    });
+                    modelSelectorGroup.style.display = 'block';
+                } else {
+                    modelSelectorGroup.style.display = 'none';
+                    console.error('Failed to fetch local models:', data.error);
+                }
+            } catch (error) {
+                modelSelectorGroup.style.display = 'none';
+                console.error('Error fetching local models:', error);
+            }
+            return;
+        }
+
         const apiKey = localStorage.getItem(`${selectedProvider}_api_key`);
         const cachedModels = localStorage.getItem(`${selectedProvider}_models`);
 
-        if (!apiKey) {
+        if (!apiKey && selectedProvider !== 'local') {
             modelSelectorGroup.style.display = 'none';
             return;
         }
@@ -294,7 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        if (!apiKey) {
+        if (!apiKey && selectedProvider !== 'local') {
             alert(`API-ключ для провайдера "${selectedProvider}" не найден. Пожалуйста, добавьте его на странице настройки ключей.`);
             window.location.href = '/api_keys';
             return;

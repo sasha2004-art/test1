@@ -365,6 +365,18 @@ pre {
 .delete-btn {
     color: var(--accent-failed);
 }
+
+/* --- Стили для страницы настроек --- */
+.settings-wrapper {
+    height: 100vh; /* Занимает 100% высоты видимой области */
+    overflow-y: auto; /* Разрешает вертикальную прокрутку ТОЛЬКО для этого блока */
+}
+
+/* Эта правка гарантирует, что .container будет красиво выглядеть внутри прокручиваемого блока */
+.settings-wrapper .container {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
 .sidebar-footer {
     margin-top: auto;
 }
